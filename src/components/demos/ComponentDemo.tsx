@@ -106,9 +106,9 @@ export function ComponentDemo({ slug }: { slug: string }) {
       );
     case "wave-input":
       return (
-        <div className="space-y-4 p-8">
+        <div className="space-y-4 px-6 py-10 md:px-10">
           <WaveInput mode="ask" onSubmit={(v) => setMsg(`heard: ${v}`)} />
-          <p className="font-serif italic text-ink-2">{msg}</p>
+          <p className="text-center font-serif italic text-ink-2">{msg}</p>
         </div>
       );
     case "hold-discharge":

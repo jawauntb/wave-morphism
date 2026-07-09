@@ -203,7 +203,7 @@ export const components: ComponentDoc[] = [
     category: "control",
     traditional: "Text input / textarea",
     summary:
-      "A sentence becomes a playable tide. Focus raises a swell under the field; submit can speak or shape-wrap.",
+      "A tide field: liquid shell, multi-layer swell that rises on focus, typing ripples, crest energy from text length. Submit releases a wake.",
     when: "Ask-the-room, compose prompts, pretext sentences — text that will be performed.",
     props: [
       { name: "mode", type: "'ask' | 'compose' | 'tide'", note: "Behavior after submit" },
