@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* tidewater vellum — wave-morphism tokens */
+  --paper: #f2eee6;
+  --paper-2: #e8e2d5;
+  --ink: #15171a;
+  --ink-2: #3a3d42;
+  --rule: rgba(21, 23, 26, 0.18);
+  --candle: #c8732a;
+  --sea: #2c4a5c;
+  --kept: #6e5a2e;
+  --open: #2c4a5c;
+  --closed: #7a1f1f;
+
+  --font-serif: var(--font-display), "Cormorant Garamond", Georgia, serif;
+  --font-text: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+  --font-numerals: var(--font-display), "Cormorant Garamond", Georgia, serif;
+
+  --pad-x: clamp(1.25rem, 4vw, 3.5rem);
+  --max: 1180px;
+  --t: 320ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  --radius-wave: 2px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(200, 115, 42, 0.4);
+  color: var(--ink);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 2px;
+}
+
+/* type roles */
+.t-brand {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+.t-display {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.t-h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  line-height: 1.25;
+}
+
+.t-body {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.t-meta,
+.t-eyebrow {
+  font-family: var(--font-text);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.t-eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.breath-word {
+  display: inline-block;
+  animation: breath 7s ease-in-out infinite;
+}
+
+@keyframes breath {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.86;
+    transform: translateY(-1.2px);
+  }
+}
+
+@keyframes btn-ripple {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(28);
+    opacity: 0;
+  }
+}
+
+@keyframes ritual-ripple {
+  from {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(42);
+    opacity: 0;
+  }
+}
+
+.animate-btn-ripple {
+  animation: btn-ripple 550ms cubic-bezier(0.2, 0.6, 0.2, 1) forwards;
+}
+
+.animate-ritual-ripple {
+  animation: ritual-ripple 900ms cubic-bezier(0.2, 0.6, 0.2, 1) forwards;
+}
+
+.duration-wave {
+  transition-duration: 320ms;
+  transition-timing-function: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+.hero-atmosphere {
+  background:
+    radial-gradient(ellipse 80% 55% at 70% 20%, rgba(142, 182, 201, 0.35), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 15% 80%, rgba(200, 115, 42, 0.12), transparent 55%),
+    linear-gradient(180deg, #e7e1d4 0%, var(--paper) 45%, #dfe8ec 100%);
+}
+
+.axiom-card {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+}
+
+.demo-stage {
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.prose-docs h2 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.65rem;
+  margin: 2.5rem 0 0.85rem;
+}
+
+.prose-docs p {
+  color: var(--ink-2);
+  margin: 0.75rem 0;
+  max-width: 42rem;
+}
+
+.prose-docs ul {
+  margin: 0.75rem 0 1.25rem;
+  padding-left: 1.1rem;
+  color: var(--ink-2);
+}
+
+.prose-docs li {
+  margin: 0.35rem 0;
+}
+
+.prose-docs code {
+  font-family: var(--font-text);
+  font-size: 0.85em;
+  background: rgba(21, 23, 26, 0.06);
+  padding: 0.1em 0.35em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breath-word,
+  .animate-btn-ripple,
+  .animate-ritual-ripple {
+    animation: none !important;
+  }
+}
