@@ -160,14 +160,49 @@ a {
 }
 
 .axiom-card {
-  border-top: 1px solid var(--rule);
-  padding-top: 1.25rem;
+  padding-top: 0.25rem;
 }
 
 .demo-stage {
-  border: 1px solid var(--rule);
-  background: var(--paper-2);
-  overflow: hidden;
+  position: relative;
+  background: transparent;
+  overflow: visible;
+}
+
+.nav-wake[data-active] {
+  background: linear-gradient(
+    90deg,
+    rgba(200, 115, 42, 0.14),
+    transparent 70%
+  );
+  border-radius: 0 1rem 1rem 0;
+}
+
+.nav-wake-mark {
+  position: absolute;
+  left: -0.85rem;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: -0.28rem;
+  border-radius: 50%;
+  background: var(--candle);
+  box-shadow: 0 0 0 3px rgba(200, 115, 42, 0.2);
+}
+
+.tide-map-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+}
+
+@media (max-width: 640px) {
+  .tide-map-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
 }
 
 .prose-docs h2 {

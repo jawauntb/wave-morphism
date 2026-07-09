@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTape } from "@/lib/tape";
 import { useSwellLFO } from "@/lib/motion";
+import { WaveRule } from "@/components/ui/WaveMorph";
 
 type DrawerProps = {
   open: boolean;
@@ -20,6 +21,7 @@ export function DrawerWake({
   children,
 }: DrawerProps) {
   const { pulse } = useTape();
+  const { value: swell } = useSwellLFO(0.12, 0.04);
 
   useEffect(() => {
     if (open) pulse("drawer", 0.4);
@@ -34,18 +36,20 @@ export function DrawerWake({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  const edgePath = tideEdge(40, 800, swell, side);
+
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-ink/20 transition-opacity duration-wave ${
+        className={`fixed inset-0 z-40 bg-ink/25 transition-opacity duration-wave ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={onClose}
         aria-hidden
       />
       <aside
-        className={`fixed top-0 z-50 flex h-full w-[min(100%,380px)] flex-col border-rule bg-paper shadow-none transition-transform duration-wave ${
-          side === "right" ? "right-0 border-l" : "left-0 border-r"
+        className={`fixed top-0 z-50 flex h-full w-[min(100%,400px)] flex-col bg-paper shadow-none transition-transform duration-wave ${
+          side === "right" ? "right-0" : "left-0"
         } ${
           open
             ? "translate-x-0"
@@ -57,16 +61,54 @@ export function DrawerWake({
         aria-modal="true"
         aria-hidden={!open}
       >
-        <div className="flex items-center justify-between border-b border-rule px-5 py-4">
+        <svg
+          className={`pointer-events-none absolute top-0 h-full w-10 ${
+            side === "right" ? "left-0 -translate-x-[1px]" : "right-0 translate-x-[1px]"
+          }`}
+          viewBox="0 0 40 800"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <path d={edgePath} fill="var(--paper)" />
+          <path
+            d={edgePath.replace(" Z", "").replace(/M [\d.]+ 0/, (m) => m)}
+            fill="none"
+            stroke="rgba(44,74,92,0.25)"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        <div className="relative z-10 flex items-center justify-between px-5 py-4">
           <h2 className="t-h2">{title ?? "drawer"}</h2>
           <button type="button" className="t-meta text-ink-2" onClick={onClose}>
             close ←
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        <WaveRule className="relative z-10 px-2" amp={4} freq={3} />
+        <div className="relative z-10 flex-1 overflow-y-auto px-5 py-5">{children}</div>
       </aside>
     </>
   );
+}
+
+function tideEdge(w: number, h: number, phase: number, side: "left" | "right") {
+  const amp = 10 + phase * 3;
+  const xAt = (y: number) => {
+    const p = y / h;
+    const wave =
+      Math.sin(p * Math.PI * 2 * 3 + phase) * amp +
+      Math.sin(p * Math.PI * 2 * 7 - phase) * (amp * 0.35);
+    return side === "right" ? w * 0.55 + wave : w * 0.45 + wave;
+  };
+  if (side === "right") {
+    let d = `M ${w} 0 L ${w} ${h} L ${xAt(h)} ${h} `;
+    for (let y = h; y >= 0; y -= 12) d += `L ${xAt(y)} ${y} `;
+    return d + " Z";
+  }
+  let d = `M 0 0 L ${xAt(0)} 0 `;
+  for (let y = 0; y <= h; y += 12) d += `L ${xAt(y)} ${y} `;
+  d += `L 0 ${h} Z`;
+  return d;
 }
 
 type ScopeProps = {
@@ -243,7 +285,7 @@ export function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="relative overflow-hidden border border-rule bg-[#12161a]">
+    <div className="relative overflow-hidden bg-[#0c141c]">
       <button
         type="button"
         className="absolute right-3 top-3 z-10 t-meta text-paper/60 hover:text-paper"
@@ -256,7 +298,7 @@ export function CodeBlock({ code }: { code: string }) {
       >
         {copied ? "copied" : "copy"}
       </button>
-      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed text-[#d7e0e6]">
+      <pre className="overflow-x-auto p-5 text-[13px] leading-relaxed text-[#d7e0e6]">
         <code className="font-mono">{code}</code>
       </pre>
     </div>

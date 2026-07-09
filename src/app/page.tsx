@@ -10,6 +10,7 @@ import { RotaryDial } from "@/components/ui/RotaryDial";
 import { ConcernPolygon, SigilMark } from "@/components/ui/ConcernPolygon";
 import { WaveInput, HoldDischarge, CalmDecay } from "@/components/ui/WaveInput";
 import { Oscilloscope, ProgressWake, CodeBlock } from "@/components/ui/Surfaces";
+import { MorphShell, WaveRule } from "@/components/ui/WaveMorph";
 import { axioms, learnings, registers } from "@/data/philosophy";
 import { traditionalMap, components } from "@/data/components";
 
@@ -32,8 +33,8 @@ export default function HomePage() {
           <p className="mb-6 t-eyebrow text-sea">a design system for propagating UI</p>
           <BreathHero>wave-morphism</BreathHero>
           <p className="mt-6 max-w-xl t-body text-ink-2">
-            shadcn for interfaces that behave like water — touch creates a wake, state is a
-            shape, and every control breathes with the room.
+            not waves painted on buttons — chrome that undulates, props that tide,
+            state that is a shape, and every control phase-locked to one swell.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/docs/philosophy">
@@ -60,15 +61,15 @@ export default function HomePage() {
           Studied across sea, tide, storm, pulse, pretext, jewel, watch, and twenty more
           instruments. The grammar is propagation — not decoration.
         </p>
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {axioms.map((a, i) => (
-            <article key={a.id} className="axiom-card">
+            <MorphShell key={a.id} className="axiom-card">
               <p className="mb-2 t-eyebrow text-ink-2">
                 {String(i + 1).padStart(2, "0")}
               </p>
               <h3 className="mb-2 font-serif text-xl italic">{a.title}</h3>
               <p className="text-[0.95rem] leading-relaxed text-ink-2">{a.body}</p>
-            </article>
+            </MorphShell>
           ))}
         </div>
       </section>
@@ -107,23 +108,21 @@ export default function HomePage() {
           Not waves painted on buttons — each control inherits the sea&apos;s interaction
           language: wavefront, decay, tone, tape.
         </p>
-        <div className="overflow-hidden border border-rule">
-          <table className="w-full text-left">
-            <thead className="border-b border-rule bg-paper-2">
-              <tr>
-                <th className="px-4 py-3 t-eyebrow font-normal text-ink-2">traditional</th>
-                <th className="px-4 py-3 t-eyebrow font-normal text-ink-2">wave-morph</th>
-              </tr>
-            </thead>
-            <tbody>
-              {traditionalMap.map((row) => (
-                <tr key={row.from} className="border-b border-rule/60 last:border-0">
-                  <td className="px-4 py-3 font-mono text-sm text-ink-2">{row.from}</td>
-                  <td className="px-4 py-3 font-serif italic text-ink">{row.to}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div>
+          <div className="tide-map-row t-eyebrow text-ink-2">
+            <span>traditional</span>
+            <span>wave-morph</span>
+          </div>
+          <WaveRule amp={4} freq={4} />
+          {traditionalMap.map((row) => (
+            <div key={row.from}>
+              <div className="tide-map-row">
+                <span className="font-mono text-sm text-ink-2">{row.from}</span>
+                <span className="font-serif italic text-ink">{row.to}</span>
+              </div>
+              <WaveRule amp={3.5} freq={5} color="rgba(44,74,92,0.22)" />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -138,9 +137,9 @@ export default function HomePage() {
           </p>
 
           <div className="grid gap-8 lg:grid-cols-2">
-            <div className="demo-stage border-paper/10 bg-[#121a22] p-6">
+            <MorphShell dark>
               <p className="mb-4 t-eyebrow text-[#8eb6c9]">wave button · phase chip</p>
-              <div className="flex flex-wrap gap-3 mb-6">
+              <div className="mb-6 flex flex-wrap gap-3">
                 <WaveButton register="oceanic">oceanic</WaveButton>
                 <WaveButton register="devotional" ritual>
                   ritual press
@@ -152,9 +151,9 @@ export default function HomePage() {
                 value={wave}
                 onChange={(v) => setWave(v as string)}
               />
-            </div>
+            </MorphShell>
 
-            <div className="demo-stage border-paper/10 bg-[#121a22] p-6 flex flex-col items-center">
+            <MorphShell dark className="flex flex-col items-center">
               <p className="mb-4 self-start t-eyebrow text-[#8eb6c9]">rotary dial</p>
               <RotaryDial
                 value={amp}
@@ -168,18 +167,18 @@ export default function HomePage() {
               <p className="mt-3 t-meta text-paper/50">
                 outer amp {Math.round(amp * 100)} · inner freq {Math.round(freq * 100)}
               </p>
-            </div>
+            </MorphShell>
 
-            <div className="demo-stage border-paper/10 bg-[#121a22] p-6 flex flex-col items-center">
+            <MorphShell dark className="flex flex-col items-center">
               <p className="mb-2 self-start t-eyebrow text-[#8eb6c9]">concern polygon · sigil</p>
               <ConcernPolygon axes={AXES} values={values} onChange={setValues} size={280} />
               <div className="mt-4 flex items-center gap-3">
                 <SigilMark values={values} size={56} playable />
                 <span className="t-meta text-paper/50">click sigil to pulse tape</span>
               </div>
-            </div>
+            </MorphShell>
 
-            <div className="demo-stage border-paper/10 bg-[#121a22] p-6 space-y-6">
+            <MorphShell dark className="space-y-6">
               <p className="t-eyebrow text-[#8eb6c9]">wave input · rituals</p>
               <WaveInput
                 mode="ask"
@@ -205,12 +204,12 @@ export default function HomePage() {
                 />
               </label>
               <Oscilloscope stress={stress} height={140} />
-            </div>
+            </MorphShell>
           </div>
 
-          <div className="mt-8 demo-stage border-paper/10 bg-[#121a22] p-6">
+          <MorphShell dark className="mt-8">
             <p className="mb-4 t-eyebrow text-[#8eb6c9]">progress wake</p>
-            <div className="flex flex-wrap gap-3 mb-4">
+            <div className="mb-4 flex flex-wrap gap-3">
               <WaveButton onClick={() => setProgress(null)}>indeterminate</WaveButton>
               <WaveButton onClick={() => setProgress(0.25)}>25%</WaveButton>
               <WaveButton onClick={() => setProgress(0.75)}>75%</WaveButton>
@@ -222,7 +221,7 @@ export default function HomePage() {
             <div className="mt-4">
               <ProgressWake value={progress} variant="fill" />
             </div>
-          </div>
+          </MorphShell>
         </div>
       </section>
 
@@ -230,19 +229,17 @@ export default function HomePage() {
       <section className="mx-auto max-w-site px-pad-x py-20">
         <p className="mb-3 t-eyebrow text-candle">component library</p>
         <h2 className="t-h2 mb-10">docs with snippets</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {components.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/docs/components/${c.slug}`}
-              className="group border border-rule p-5 transition-colors duration-wave hover:border-sea/50 hover:bg-paper-2/40"
-            >
-              <p className="t-eyebrow text-ink-2">{c.category}</p>
-              <h3 className="mt-2 font-serif text-xl italic group-hover:text-sea">
-                {c.name}
-              </h3>
-              <p className="mt-2 text-sm text-ink-2 line-clamp-2">{c.summary}</p>
-              <p className="mt-3 t-meta text-candle">replaces {c.traditional}</p>
+            <Link key={c.slug} href={`/docs/components/${c.slug}`} className="group block">
+              <MorphShell className="h-full transition-transform duration-wave group-hover:-translate-y-0.5">
+                <p className="t-eyebrow text-ink-2">{c.category}</p>
+                <h3 className="mt-2 font-serif text-xl italic group-hover:text-sea">
+                  {c.name}
+                </h3>
+                <p className="mt-2 line-clamp-2 text-sm text-ink-2">{c.summary}</p>
+                <p className="mt-3 t-meta text-candle">replaces {c.traditional}</p>
+              </MorphShell>
             </Link>
           ))}
         </div>

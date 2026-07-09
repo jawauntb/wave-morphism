@@ -10,6 +10,7 @@ import { RotaryDial } from "@/components/ui/RotaryDial";
 import { ConcernPolygon, SigilMark } from "@/components/ui/ConcernPolygon";
 import { WaveInput, HoldDischarge, CalmDecay } from "@/components/ui/WaveInput";
 import { Oscilloscope, ProgressWake } from "@/components/ui/Surfaces";
+import { MorphShell } from "@/components/ui/WaveMorph";
 
 const AXES = ["prayer", "body", "work", "memory", "future", "love", "friend", "risk"];
 
@@ -29,10 +30,12 @@ export default function PlaygroundPage() {
         dek="Compose RippleField energy, polygon state, and ritual controls in one room."
       />
 
-      <SeaSurface height={220} className="mb-8" label="playground sea" />
+      <MorphShell pad={false} className="mb-8" dark>
+        <SeaSurface height={220} label="playground sea" />
+      </MorphShell>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="demo-stage p-6 space-y-5">
+        <MorphShell className="space-y-5">
           <WaterText as="h2" className="t-h2" radius={90}>
             controls
           </WaterText>
@@ -55,20 +58,31 @@ export default function PlaygroundPage() {
           <p className="font-serif italic text-ink-2">{note}</p>
           <div className="flex flex-wrap gap-3">
             <HoldDischarge onDischarge={() => setStress(0.95)}>discharge</HoldDischarge>
-            <CalmDecay onCalm={() => { setStress(0.1); setAmp(0.2); }}>
+            <CalmDecay
+              onCalm={() => {
+                setStress(0.1);
+                setAmp(0.2);
+              }}
+            >
               still
             </CalmDecay>
-            <WaveButton register="devotional" ritual onClick={() => setValues(AXES.map(() => 0.5))}>
+            <WaveButton
+              register="devotional"
+              ritual
+              onClick={() => setValues(AXES.map(() => 0.5))}
+            >
               center polygon
             </WaveButton>
           </div>
-        </div>
+        </MorphShell>
 
-        <div className="demo-stage p-6 flex flex-col items-center">
+        <MorphShell className="flex flex-col items-center">
           <ConcernPolygon axes={AXES} values={values} onChange={setValues} />
           <SigilMark values={values} size={64} playable className="mt-4" />
           <div className="mt-6 w-full">
-            <label className="t-eyebrow text-ink-2">stress {Math.round(stress * 100)}</label>
+            <label className="t-eyebrow text-ink-2">
+              stress {Math.round(stress * 100)}
+            </label>
             <input
               type="range"
               className="mt-2 w-full accent-sea"
@@ -81,7 +95,7 @@ export default function PlaygroundPage() {
             <Oscilloscope className="mt-4" stress={stress} />
             <ProgressWake className="mt-4" value={amp} variant="fill" />
           </div>
-        </div>
+        </MorphShell>
       </div>
     </DocsShell>
   );

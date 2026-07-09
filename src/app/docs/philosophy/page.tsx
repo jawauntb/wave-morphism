@@ -1,6 +1,7 @@
 import { DocsShell, PageHeader } from "@/components/layout/Chrome";
 import { axioms, learnings, registers } from "@/data/philosophy";
 import { traditionalMap } from "@/data/components";
+import { MorphShell, WaveRule } from "@/components/ui/WaveMorph";
 
 export const metadata = { title: "Philosophy" };
 
@@ -10,7 +11,7 @@ export default function PhilosophyPage() {
       <PageHeader
         eyebrow="foundations"
         title="philosophy"
-        dek="Wave-morphism is not a skin. It is an interaction grammar distilled from a full instrument site — sea, compass, tide, storm, pulse, pretext, and more."
+        dek="Wave-morphism is not a skin. It is an interaction grammar — and the chrome itself must undulate, not just the demos."
       />
 
       <div className="prose-docs">
@@ -25,33 +26,45 @@ export default function PhilosophyPage() {
           <em>operational</em>, <em>oceanic</em> — held at once. A surface is on-brand
           when at least two are present and none dominates.
         </p>
+        <p>
+          The failure mode is a normal docs site with wave <em>concepts</em>. True
+          wave-morphism means borders breathe, dividers are sine rules, props arrive as
+          tides, and tables dissolve into wakes.
+        </p>
 
         <h2>registers</h2>
-        <div className="not-prose my-6 grid gap-3 sm:grid-cols-3">
-          {registers.map((r) => (
-            <div key={r.name} className="border border-rule p-4">
-              <p className="t-eyebrow text-candle">{r.name}</p>
-              <p className="mt-2 font-mono text-sm text-ink-2">
-                {r.examples.join(" · ")}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <h2>axioms</h2>
       </div>
-
-      <div className="mt-6 space-y-6">
-        {axioms.map((a, i) => (
-          <article key={a.id} className="border-t border-rule pt-5">
-            <p className="t-eyebrow text-ink-2">{String(i + 1).padStart(2, "0")}</p>
-            <h3 className="mt-1 font-serif text-2xl italic">{a.title}</h3>
-            <p className="mt-2 max-w-2xl text-ink-2">{a.body}</p>
-          </article>
+      <div className="my-6 grid gap-4 sm:grid-cols-3">
+        {registers.map((r) => (
+          <MorphShell key={r.name}>
+            <p className="t-eyebrow text-candle">{r.name}</p>
+            <p className="mt-2 font-mono text-sm text-ink-2">
+              {r.examples.join(" · ")}
+            </p>
+          </MorphShell>
         ))}
       </div>
 
-      <div className="prose-docs mt-14">
+      <div className="prose-docs">
+        <h2>axioms</h2>
+      </div>
+
+      <div className="mt-6 space-y-2">
+        {axioms.map((a, i) => (
+          <div key={a.id}>
+            {i > 0 ? <WaveRule amp={4} freq={4} className="my-2" /> : null}
+            <article className="py-4">
+              <p className="t-eyebrow text-ink-2">{String(i + 1).padStart(2, "0")}</p>
+              <h3 className="mt-1 font-serif text-2xl italic">{a.title}</h3>
+              <p className="mt-2 max-w-2xl text-ink-2">{a.body}</p>
+            </article>
+          </div>
+        ))}
+      </div>
+
+      <WaveRule className="my-10" amp={6} freq={3} />
+
+      <div className="prose-docs">
         <h2>learnings from the field</h2>
       </div>
       <div className="mt-4 space-y-4">
@@ -63,20 +76,21 @@ export default function PhilosophyPage() {
         ))}
       </div>
 
-      <div className="prose-docs mt-14">
+      <WaveRule className="my-10" amp={5} freq={3.5} />
+
+      <div className="prose-docs">
         <h2>traditional → wave-morph</h2>
       </div>
-      <div className="mt-4 overflow-hidden border border-rule">
-        <table className="w-full text-left">
-          <tbody>
-            {traditionalMap.map((row) => (
-              <tr key={row.from} className="border-b border-rule last:border-0">
-                <td className="px-4 py-2.5 font-mono text-sm text-ink-2">{row.from}</td>
-                <td className="px-4 py-2.5 font-serif italic">{row.to}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-4">
+        {traditionalMap.map((row) => (
+          <div key={row.from}>
+            <div className="tide-map-row">
+              <span className="font-mono text-sm text-ink-2">{row.from}</span>
+              <span className="font-serif italic">{row.to}</span>
+            </div>
+            <WaveRule amp={3.5} freq={5} color="rgba(44,74,92,0.22)" />
+          </div>
+        ))}
       </div>
     </DocsShell>
   );

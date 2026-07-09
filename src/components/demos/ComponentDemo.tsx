@@ -13,9 +13,9 @@ import {
   Oscilloscope,
   ProgressWake,
 } from "@/components/ui/Surfaces";
-import { useSwellLFO } from "@/lib/motion";
 import { useTape } from "@/lib/tape";
 import { TapeStrip } from "@/components/canvas/TapeStrip";
+import { SwellInstrument } from "@/components/ui/WaveMorph";
 
 const AXES = ["prayer", "body", "work", "memory", "future", "love", "friend", "risk"];
 
@@ -28,7 +28,6 @@ export function ComponentDemo({ slug }: { slug: string }) {
   const [progress, setProgress] = useState<number | null>(0.45);
   const [msg, setMsg] = useState("the room is quiet.");
   const [stress, setStress] = useState(0.4);
-  const swell = useSwellLFO();
   const { pulse, pulses } = useTape();
 
   switch (slug) {
@@ -36,20 +35,7 @@ export function ComponentDemo({ slug }: { slug: string }) {
     case "sea-surface":
       return <SeaSurface height={260} label="pointer → ripple → decay" />;
     case "swell-lfo":
-      return (
-        <div className="flex h-56 flex-col items-center justify-center gap-4 p-6">
-          <div
-            className="h-24 w-24 rounded-full border border-sea/40 bg-sea/20"
-            style={{
-              transform: `scale(${1 + swell.value * 0.08})`,
-              opacity: 0.75 + swell.value * 0.15,
-            }}
-          />
-          <p className="t-meta text-ink-2">
-            swell {swell.value.toFixed(2)} · drift {swell.drift.toFixed(2)}
-          </p>
-        </div>
-      );
+      return <SwellInstrument />;
     case "tape":
       return (
         <div className="space-y-4 p-6">

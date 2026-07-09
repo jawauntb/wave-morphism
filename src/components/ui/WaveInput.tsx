@@ -102,10 +102,12 @@ export function HoldDischarge({
     else pulse("charged", 0.7);
   };
 
+  const crest = chargePath(100, 40, charge);
+
   return (
     <button
       type="button"
-      className={`relative overflow-hidden border border-sea/40 px-4 py-3 t-meta text-sea ${className}`}
+      className={`relative inline-flex min-h-[2.75rem] items-center overflow-visible px-5 py-3 t-meta text-sea ${className}`}
       onPointerDown={() => {
         holding.current = true;
         start.current = performance.now();
@@ -129,13 +131,60 @@ export function HoldDischarge({
         setCharge(0);
       }}
     >
-      <span
-        className="pointer-events-none absolute inset-y-0 left-0 bg-sea/20 transition-[width] duration-75"
-        style={{ width: `${charge * 100}%` }}
-      />
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 100 40"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path
+          d={crest}
+          fill={`rgba(44,74,92,${0.08 + charge * 0.25})`}
+          stroke="rgba(44,74,92,0.55)"
+          strokeWidth={1.1}
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d={`M 0 40 L 0 ${40 - charge * 28} Q ${50 * charge} ${8 - charge * 6} ${100 * charge} ${40 - charge * 20} L ${100 * charge} 40 Z`}
+          fill="rgba(142,182,201,0.35)"
+        />
+      </svg>
       <span className="relative z-10">{children}</span>
     </button>
   );
+}
+
+function chargePath(w: number, h: number, charge: number) {
+  const amp = 1.5 + charge * 3;
+  const phase = charge * 4;
+  const inset = 2;
+  let d = "";
+  const steps = 16;
+  for (let i = 0; i <= steps; i++) {
+    const p = i / steps;
+    const x = inset + (w - inset * 2) * p;
+    const y = inset + Math.sin(p * Math.PI * 2 + phase) * amp * 0.4;
+    d += i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+  }
+  for (let i = 1; i <= steps; i++) {
+    const p = i / steps;
+    const y = inset + (h - inset * 2) * p;
+    const x = w - inset + Math.sin(p * Math.PI * 2 + phase) * amp * 0.5;
+    d += ` L ${x} ${y}`;
+  }
+  for (let i = 1; i <= steps; i++) {
+    const p = i / steps;
+    const x = w - inset - (w - inset * 2) * p;
+    const y = h - inset + Math.sin(p * Math.PI * 2 - phase) * amp * 0.4;
+    d += ` L ${x} ${y}`;
+  }
+  for (let i = 1; i <= steps; i++) {
+    const p = i / steps;
+    const y = h - inset - (h - inset * 2) * p;
+    const x = inset + Math.sin(p * Math.PI * 2 - phase) * amp * 0.5;
+    d += ` L ${x} ${y}`;
+  }
+  return d + " Z";
 }
 
 type CalmProps = {
@@ -173,21 +222,44 @@ export function CalmDecay({
     return () => cancelAnimationFrame(raf);
   }, [running, durationMs, onCalm]);
 
+  const remain = running ? 1 - p : 1;
+  const path = chargePath(100, 36, running ? remain * 0.6 : 0.15);
+
   return (
     <button
       type="button"
       disabled={running}
-      className={`relative border border-ink/20 px-4 py-2.5 t-meta text-ink-2 disabled:opacity-70 ${className}`}
+      className={`relative inline-flex min-h-[2.5rem] items-center px-5 py-2.5 t-meta text-ink-2 disabled:opacity-80 ${className}`}
       onClick={() => {
         pulse("calm", 0.55);
         setRunning(true);
       }}
     >
-      <span
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-sea"
-        style={{ transform: `scaleX(${running ? 1 - p : 0})` }}
-      />
-      {running ? `stilling… ${Math.round((1 - p) * 100)}%` : children}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 100 36"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path
+          d={path}
+          fill="rgba(21,23,26,0.03)"
+          stroke="rgba(21,23,26,0.28)"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
+        {running ? (
+          <path
+            d={`M 4 30 Q ${50 * remain} ${30 - remain * 10} ${96 * remain} 30`}
+            fill="none"
+            stroke="rgba(44,74,92,0.7)"
+            strokeWidth={1.5}
+          />
+        ) : null}
+      </svg>
+      <span className="relative z-10">
+        {running ? `stilling… ${Math.round(remain * 100)}%` : children}
+      </span>
     </button>
   );
 }
