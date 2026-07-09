@@ -117,7 +117,7 @@ type ScopeProps = {
   stress?: number;
 };
 
-export function Oscilloscope({ className = "", height = 160, stress = 0.35 }: ScopeProps) {
+export function Oscilloscope({ className = "", height = 180, stress = 0.35 }: ScopeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stressRef = useRef(stress);
   stressRef.current = stress;
@@ -128,10 +128,11 @@ export function Oscilloscope({ className = "", height = 160, stress = 0.35 }: Sc
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const buffers = [
-      new Float32Array(240),
-      new Float32Array(240),
-      new Float32Array(240),
+      new Float32Array(320),
+      new Float32Array(320),
+      new Float32Array(320),
     ];
+    const labels = ["hr", "breath", "brain"];
     let i = 0;
     let raf = 0;
 
@@ -153,29 +154,68 @@ export function Oscilloscope({ className = "", height = 160, stress = 0.35 }: Sc
       const s = stressRef.current;
       const t = now / 1000;
 
-      buffers[0][i] = Math.sin(t * (2.2 + s * 4)) * (0.4 + s * 0.5) + (Math.random() - 0.5) * s * 0.15;
-      buffers[1][i] = Math.sin(t * 0.35) * 0.55;
-      buffers[2][i] = Math.sin(t * (8 + s * 6)) * (0.2 + s * 0.4);
+      buffers[0][i] =
+        Math.sin(t * (2.4 + s * 5)) * (0.45 + s * 0.5) +
+        Math.sin(t * 4.8) * 0.12 * s +
+        (Math.random() - 0.5) * s * 0.18;
+      buffers[1][i] = Math.sin(t * 0.32) * 0.6 + Math.sin(t * 0.9) * 0.08;
+      buffers[2][i] =
+        Math.sin(t * (9 + s * 8)) * (0.22 + s * 0.45) +
+        Math.sin(t * 17) * 0.08 * s;
       i = (i + 1) % buffers[0].length;
 
-      ctx.fillStyle = "#0c141c";
+      // phosphor fade
+      ctx.fillStyle = "rgba(8,14,20,0.22)";
       ctx.fillRect(0, 0, w, h);
+
+      // grid
+      ctx.strokeStyle = "rgba(142,182,201,0.08)";
+      ctx.lineWidth = 1;
+      for (let gy = 0; gy < h; gy += h / 6) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(w, gy);
+        ctx.stroke();
+      }
+      for (let gx = 0; gx < w; gx += w / 8) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, h);
+        ctx.stroke();
+      }
 
       const colors = ["#C8732A", "#6ec8b8", "#8eb6c9"];
       buffers.forEach((buf, bi) => {
         const y0 = (h / 4) * (bi + 1);
+        // glow pass
         ctx.beginPath();
         for (let x = 0; x < buf.length; x++) {
           const sample = buf[(i + x) % buf.length];
           const px = (x / buf.length) * w;
-          const py = y0 - sample * (h * 0.12);
+          const py = y0 - sample * (h * 0.13);
           if (x === 0) ctx.moveTo(px, py);
           else ctx.lineTo(px, py);
         }
         ctx.strokeStyle = colors[bi];
-        ctx.lineWidth = 1.25;
+        ctx.lineWidth = 3.5;
+        ctx.globalAlpha = 0.18;
         ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        ctx.fillStyle = colors[bi];
+        ctx.font = "10px var(--font-text), monospace";
+        ctx.fillText(labels[bi], 8, y0 - h * 0.1);
       });
+
+      // scan beam
+      const beamX = ((now / 16) % w);
+      const beam = ctx.createLinearGradient(beamX - 20, 0, beamX + 4, 0);
+      beam.addColorStop(0, "rgba(255,255,255,0)");
+      beam.addColorStop(1, "rgba(255,255,255,0.08)");
+      ctx.fillStyle = beam;
+      ctx.fillRect(beamX - 20, 0, 24, h);
 
       raf = requestAnimationFrame(draw);
     };
@@ -242,17 +282,66 @@ export function ProgressWake({
       const w = rect.width;
       const h = rect.height;
       ctx.clearRect(0, 0, w, h);
-      const progress = value ?? (0.35 + shimmer * 0.3);
+
+      // depth wash
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, "rgba(12,20,28,0.0)");
+      bg.addColorStop(1, "rgba(12,20,28,0.35)");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      const progress = value ?? 0.35 + shimmer * 0.35;
+      const end = w * Math.max(0.04, Math.min(1, progress));
+
+      // wake fill under the trace
       ctx.beginPath();
-      for (let x = 0; x <= w * progress; x += 2) {
-        const beat = Math.exp(-Math.pow(((x / 40) % 1) - 0.2, 2) * 80) * 10;
-        const y = h / 2 - beat - Math.sin(x * 0.08 + now * 0.004) * 1.5;
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= end; x += 2) {
+        const beat = Math.exp(-Math.pow(((x / 36) % 1) - 0.18, 2) * 90) * 14;
+        const y =
+          h * 0.62 -
+          beat -
+          Math.sin(x * 0.07 + now * 0.004) * 2.5 -
+          Math.sin(x * 0.02 + now * 0.001) * 1.5;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(end, h);
+      ctx.closePath();
+      const wake = ctx.createLinearGradient(0, 0, 0, h);
+      wake.addColorStop(0, "rgba(142,182,201,0.35)");
+      wake.addColorStop(1, "rgba(44,74,92,0.08)");
+      ctx.fillStyle = wake;
+      ctx.fill();
+
+      // crest line
+      ctx.beginPath();
+      for (let x = 0; x <= end; x += 2) {
+        const beat = Math.exp(-Math.pow(((x / 36) % 1) - 0.18, 2) * 90) * 14;
+        const y =
+          h * 0.62 -
+          beat -
+          Math.sin(x * 0.07 + now * 0.004) * 2.5 -
+          Math.sin(x * 0.02 + now * 0.001) * 1.5;
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = "#2C4A5C";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = value == null ? "#C8732A" : "#8eb6c9";
+      ctx.lineWidth = 2;
       ctx.stroke();
+
+      // leading tip glow
+      const tipX = end;
+      const tipBeat = Math.exp(-Math.pow(((tipX / 36) % 1) - 0.18, 2) * 90) * 14;
+      const tipY =
+        h * 0.62 -
+        tipBeat -
+        Math.sin(tipX * 0.07 + now * 0.004) * 2.5;
+      const tip = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, 16);
+      tip.addColorStop(0, "rgba(255,230,180,0.55)");
+      tip.addColorStop(1, "rgba(255,230,180,0)");
+      ctx.fillStyle = tip;
+      ctx.fillRect(tipX - 16, tipY - 16, 32, 32);
+
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
@@ -262,10 +351,18 @@ export function ProgressWake({
   if (variant === "fill") {
     const p = value ?? 0.4 + shimmer * 0.25 + swell * 0.05;
     return (
-      <div className={`h-2 overflow-hidden rounded-sm bg-paper-2 ${className}`}>
+      <div className={`relative h-4 overflow-hidden bg-[#0c141c] ${className}`}>
         <div
-          className="h-full bg-gradient-to-r from-candle to-sea transition-[width] duration-wave"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-candle via-sea to-[#8eb6c9] transition-[width] duration-wave"
           style={{ width: `${Math.max(4, Math.min(100, p * 100))}%` }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              "repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(255,255,255,0.08) 8px, rgba(255,255,255,0.08) 9px)",
+            transform: `translateX(${shimmer * 12}px)`,
+          }}
         />
       </div>
     );
@@ -274,7 +371,7 @@ export function ProgressWake({
   return (
     <canvas
       ref={canvasRef}
-      className={`h-10 w-full ${className}`}
+      className={`h-14 w-full ${className}`}
       aria-label="progress wake"
     />
   );

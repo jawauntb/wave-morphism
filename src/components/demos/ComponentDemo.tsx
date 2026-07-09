@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SeaSurface } from "@/components/canvas/SeaSurface";
+import { RippleField } from "@/components/canvas/RippleField";
 import { WaterText } from "@/components/ui/WaterText";
 import { WaveButton } from "@/components/ui/WaveButton";
 import { PhaseChip } from "@/components/ui/PhaseChip";
@@ -32,8 +33,14 @@ export function ComponentDemo({ slug }: { slug: string }) {
 
   switch (slug) {
     case "ripple-field":
+      return <RippleField height={300} />;
     case "sea-surface":
-      return <SeaSurface height={260} label="pointer → ripple → decay" />;
+      return (
+        <SeaSurface
+          height={300}
+          label="webgl caustics · dual canvas · touch ripples"
+        />
+      );
     case "swell-lfo":
       return <SwellInstrument />;
     case "tape":

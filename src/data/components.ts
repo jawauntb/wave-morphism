@@ -62,18 +62,14 @@ export const components: ComponentDoc[] = [
     category: "primitive",
     traditional: "Click ripple / Material ink",
     summary:
-      "A shared wavefront buffer. Pointer events spawn gaussian ripples that decay across a canvas and can drive shaders, audio, and tape.",
-    when: "Any surface that should feel touchable — cards, seas, pads, empty states.",
+      "Top-down interference instrument. Every touch is a wavefront; multitouch sources interfere with bright constructive peaks. The atomic primitive the sea uses under the hood.",
+    when: "Any surface that should feel touchable — pads, empty states, playable fields.",
     props: [
-      { name: "maxRipples", type: "number", note: "Default 12 active slots" },
-      { name: "onRipple", type: "(r) => void", note: "Optional side effects" },
-      { name: "intensity", type: "0..1", note: "Scales amplitude" },
+      { name: "height", type: "number", note: "Field height in px" },
+      { name: "maxRipples", type: "number", note: "Default 24 active slots" },
     ],
-    snippet: `<RippleField
-  className="h-64 rounded-wave"
-  intensity={0.8}
-  onRipple={(r) => tape.pulse("touch", r.amp)}
-/>`,
+    snippet: `<RippleField height={320} />
+{/* multitouch: two fingers = two interfering sources */}`,
   },
   {
     slug: "swell-lfo",
@@ -271,14 +267,14 @@ export const components: ComponentDoc[] = [
     category: "surface",
     traditional: "Hero image / background video",
     summary:
-      "Canonical dual-layer water: WebGL caustics under 2D swell lines, shared ripples, optional audio lock.",
+      "Canonical dual-layer water from objet d'art: WebGL FBM caustics + depth gradient under 2D foam crests. Pointer ripples feed the shader as vec4 uniforms and displace the foam lines.",
     when: "Thresholds, immersive scenes, any page that needs a living horizon.",
     props: [
-      { name: "height", type: "string", note: "CSS height" },
-      { name: "audioLock", type: "boolean", note: "Phase to swell LFO" },
-      { name: "tilt", type: "boolean", note: "Device orientation slosh" },
+      { name: "height", type: "number", note: "Pixel height" },
+      { name: "intensity", type: "0..1", note: "Ripple amplitude scale" },
+      { name: "showFoam", type: "boolean", note: "2D swell lines on top" },
     ],
-    snippet: `<SeaSurface height="42vh" audioLock tilt />`,
+    snippet: `<SeaSurface height={320} intensity={0.9} showFoam />`,
   },
   {
     slug: "drawer-wake",
@@ -302,16 +298,13 @@ export const components: ComponentDoc[] = [
     category: "surface",
     traditional: "Progress / chart / meter",
     summary:
-      "Scrolling ring-buffer traces. Channels can be audible. Patterns save as URL hashes.",
+      "Phosphor-fade multi-channel scope with glow passes, grid, and a scanning beam. Stress drives amplitude and noise — the room's vitals as waves.",
     when: "Live status, vitals, multi-signal monitoring, playable charts.",
     props: [
-      { name: "channels", type: "Channel[]", note: "Named ring buffers" },
-      { name: "audible", type: "boolean", note: "Per-channel tones" },
+      { name: "stress", type: "0..1", note: "Drives amplitude + noise" },
+      { name: "height", type: "number", note: "Canvas height" },
     ],
-    snippet: `<Oscilloscope
-  channels={[hr, breath, bp]}
-  audible
-/>`,
+    snippet: `<Oscilloscope stress={0.4} height={180} />`,
   },
   {
     slug: "progress-wake",
