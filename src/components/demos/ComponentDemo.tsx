@@ -60,7 +60,7 @@ export function ComponentDemo({ slug }: { slug: string }) {
       );
     case "wave-button":
       return (
-        <div className="flex flex-wrap gap-3 p-8">
+        <div className="flex flex-wrap items-center justify-center gap-5 py-10">
           <WaveButton register="oceanic">oceanic</WaveButton>
           <WaveButton register="devotional" ritual>
             ritual

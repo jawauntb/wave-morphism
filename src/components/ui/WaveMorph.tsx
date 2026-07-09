@@ -88,7 +88,7 @@ export function WaveEdge({
   );
 }
 
-/** Container with living wavy border */
+/** Container with living wavy border — amplitude large enough to read at any size */
 export function MorphShell({
   children,
   className = "",
@@ -104,40 +104,67 @@ export function MorphShell({
   const { value: swell, drift } = useSwellLFO(0.13, 0.04);
   const w = 100;
   const h = 100;
-  const inset = 1.2;
-  const ax = 1.8 + swell * 0.55;
-  const ay = 1.4 + drift * 0.4;
+  // ~4–7% of each axis — visible on both short and wide panels
+  const ax = 4.5 + swell * 1.8 + Math.abs(drift) * 0.8;
+  const ay = 5.5 + drift * 1.6 + Math.abs(swell) * 1.2;
+  const inset = Math.max(ax, ay) + 0.5;
 
-  const borderPath = wavyRect(w, h, inset, ax, ay, swell);
-  const fillPath = wavyRect(w, h, inset + 0.35, ax * 0.85, ay * 0.85, swell + 0.3);
+  const borderPath = wavyRect(w, h, inset, ax, ay, swell * 1.4 + drift);
+  const fillPath = wavyRect(w, h, inset + 0.15, ax * 0.92, ay * 0.92, swell * 1.4 + drift + 0.2);
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative isolate ${className}`}>
       <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-visible"
         viewBox={`0 0 ${w} ${h}`}
         preserveAspectRatio="none"
         aria-hidden
       >
         <defs>
           <linearGradient id={`mg-${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={dark ? "#1a2833" : "#e8e2d5"} />
-            <stop offset="55%" stopColor={dark ? "#0f1820" : "#f2eee6"} />
-            <stop offset="100%" stopColor={dark ? "#15222c" : "#dce6ea"} />
+            <stop offset="0%" stopColor={dark ? "#1a3040" : "#e4ddd0"} />
+            <stop offset="45%" stopColor={dark ? "#0c1822" : "#f2eee6"} />
+            <stop offset="100%" stopColor={dark ? "#152830" : "#d5e0e6"} />
           </linearGradient>
+          <clipPath id={`clip-${id}`}>
+            <path d={fillPath} />
+          </clipPath>
         </defs>
         <path d={fillPath} fill={`url(#mg-${id})`} />
         <path
           d={borderPath}
           fill="none"
-          stroke={dark ? "rgba(142,182,201,0.35)" : "rgba(44,74,92,0.35)"}
+          stroke={dark ? "rgba(142,182,201,0.55)" : "rgba(44,74,92,0.45)"}
+          strokeWidth={0.55}
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d={innerCrest(w, h, inset, swell, drift)}
+          fill="none"
+          stroke={dark ? "rgba(200,115,42,0.35)" : "rgba(200,115,42,0.28)"}
           strokeWidth={0.35}
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <div className={`relative z-10 ${pad ? "p-6 md:p-8" : ""}`}>{children}</div>
+      <div className={`relative z-10 ${pad ? "p-8 md:p-10" : ""}`}>
+        {children}
+      </div>
     </div>
   );
+}
+
+function innerCrest(w: number, h: number, inset: number, swell: number, drift: number) {
+  const y0 = h * (0.42 + swell * 0.04);
+  let d = `M ${inset + 2} ${y0}`;
+  for (let x = inset + 2; x <= w - inset - 2; x += 2) {
+    const p = x / w;
+    const y =
+      y0 +
+      Math.sin(p * Math.PI * 2 * 2.2 + swell * 2 + drift) * 2.8 +
+      Math.sin(p * Math.PI * 2 * 5.5 - drift) * 1.1;
+    d += ` L ${x} ${y}`;
+  }
+  return d;
 }
 
 function wavyRect(
@@ -152,31 +179,43 @@ function wavyRect(
   const r = w - inset;
   const t = inset;
   const b = h - inset;
-  const steps = 24;
+  const steps = 32;
   let d = "";
 
   for (let i = 0; i <= steps; i++) {
     const p = i / steps;
     const x = l + (r - l) * p;
-    const y = t + Math.sin(p * Math.PI * 2 * 2 + phase) * ay;
+    const y =
+      t +
+      Math.sin(p * Math.PI * 2 * 2 + phase) * ay +
+      Math.sin(p * Math.PI * 2 * 4.5 - phase) * ay * 0.35;
     d += i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
   }
   for (let i = 1; i <= steps; i++) {
     const p = i / steps;
     const y = t + (b - t) * p;
-    const x = r + Math.sin(p * Math.PI * 2 * 2 + phase * 1.3) * ax;
+    const x =
+      r +
+      Math.sin(p * Math.PI * 2 * 2 + phase * 1.3) * ax +
+      Math.sin(p * Math.PI * 2 * 3.8 - phase) * ax * 0.3;
     d += ` L ${x} ${y}`;
   }
   for (let i = 1; i <= steps; i++) {
     const p = i / steps;
     const x = r - (r - l) * p;
-    const y = b + Math.sin(p * Math.PI * 2 * 2 - phase) * ay;
+    const y =
+      b +
+      Math.sin(p * Math.PI * 2 * 2 - phase) * ay +
+      Math.sin(p * Math.PI * 2 * 4.5 + phase) * ay * 0.35;
     d += ` L ${x} ${y}`;
   }
   for (let i = 1; i <= steps; i++) {
     const p = i / steps;
     const y = b - (b - t) * p;
-    const x = l + Math.sin(p * Math.PI * 2 * 2 - phase * 1.3) * ax;
+    const x =
+      l +
+      Math.sin(p * Math.PI * 2 * 2 - phase * 1.3) * ax +
+      Math.sin(p * Math.PI * 2 * 3.8 + phase) * ax * 0.3;
     d += ` L ${x} ${y}`;
   }
   return d + " Z";

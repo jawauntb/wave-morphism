@@ -27,7 +27,18 @@ export default function ComponentDocPage({
       <PageHeader eyebrow={doc.category} title={doc.name} dek={doc.summary} />
       <p className="mb-6 t-meta text-candle">replaces {doc.traditional}</p>
 
-      <MorphShell pad={false} className="mb-10 min-h-[16rem]" dark={doc.slug === "swell-lfo" || doc.slug === "oscilloscope" || doc.slug === "sea-surface" || doc.slug === "ripple-field"}>
+      <MorphShell
+        pad={false}
+        className="mb-10 min-h-[18rem]"
+        dark={
+          doc.slug === "swell-lfo" ||
+          doc.slug === "oscilloscope" ||
+          doc.slug === "sea-surface" ||
+          doc.slug === "ripple-field" ||
+          doc.slug === "signal" ||
+          doc.slug === "progress-wake"
+        }
+      >
         <ComponentDemo slug={doc.slug} />
       </MorphShell>
 
