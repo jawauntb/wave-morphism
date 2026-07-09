@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { useTape } from "@/lib/tape";
+import { useSwellLFO } from "@/lib/motion";
 
 type Props = {
   axes: string[];
@@ -11,31 +12,55 @@ type Props = {
   className?: string;
 };
 
+/**
+ * Concern field as a liquid blob — cardinal spline through axis crests,
+ * breathing with the shared swell. Not a straight-edged radar chart.
+ */
 export function ConcernPolygon({
   axes,
   values,
   onChange,
-  size = 260,
+  size = 280,
   className = "",
 }: Props) {
   const { pulse } = useTape();
+  const { value: swell, drift } = useSwellLFO(0.14, 0.04);
   const dragging = useRef<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
+  const gradId = useId().replace(/:/g, "");
   const cx = size / 2;
   const cy = size / 2;
-  const maxR = size * 0.38;
+  const maxR = size * 0.36;
 
   const points = useMemo(() => {
     return values.map((v, i) => {
       const a = -Math.PI / 2 + (i / axes.length) * Math.PI * 2;
-      const r = Math.max(0.08, Math.min(1, v)) * maxR;
-      return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, a };
+      // swell gently modulates radius so the blob breathes
+      const breathe = 1 + swell * 0.04 + Math.sin(a * 2 + drift) * 0.02;
+      const r = Math.max(0.1, Math.min(1, v)) * maxR * breathe;
+      return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, a, r };
     });
-  }, [values, axes.length, cx, cy, maxR]);
+  }, [values, axes.length, cx, cy, maxR, swell, drift]);
 
-  const poly = points.map((p) => `${p.x},${p.y}`).join(" ");
+  const blobPath = useMemo(() => cardinalLoop(points, 0.35), [points]);
+  const foamPath = useMemo(() => {
+    // slightly larger offset foam ring
+    const foamPts = points.map((p) => {
+      const grow = 1.08 + swell * 0.03;
+      return {
+        x: cx + (p.x - cx) * grow,
+        y: cy + (p.y - cy) * grow,
+      };
+    });
+    return cardinalLoop(foamPts, 0.4);
+  }, [points, cx, cy, swell]);
 
-  const project = (clientX: number, clientY: number, index: number, el: SVGSVGElement) => {
+  const project = (
+    clientX: number,
+    clientY: number,
+    index: number,
+    el: SVGSVGElement
+  ) => {
     const rect = el.getBoundingClientRect();
     const x = ((clientX - rect.left) / rect.width) * size - cx;
     const y = ((clientY - rect.top) / rect.height) * size - cy;
@@ -45,18 +70,23 @@ export function ConcernPolygon({
   };
 
   return (
-    <div className={`relative ${className}`} style={{ width: size, height: size }}>
+    <div className={`relative ${className}`} style={{ width: size, height: size + 28 }}>
       <svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className="touch-none"
+        className="touch-none overflow-visible"
         data-touch-surface
         onPointerMove={(e) => {
           if (dragging.current == null) return;
           const el = e.currentTarget;
           const next = [...values];
-          next[dragging.current] = project(e.clientX, e.clientY, dragging.current, el);
+          next[dragging.current] = project(
+            e.clientX,
+            e.clientY,
+            dragging.current,
+            el
+          );
           onChange(next);
         }}
         onPointerUp={() => {
@@ -65,74 +95,177 @@ export function ConcernPolygon({
         }}
         onPointerLeave={() => setHover(null)}
       >
+        <defs>
+          <radialGradient id={`blob-${gradId}`} cx="50%" cy="45%" r="60%">
+            <stop offset="0%" stopColor="rgba(200,115,42,0.35)" />
+            <stop offset="55%" stopColor="rgba(200,115,42,0.16)" />
+            <stop offset="100%" stopColor="rgba(44,74,92,0.08)" />
+          </radialGradient>
+        </defs>
+
+        {/* tidal rings — dashed sine-warped circles */}
+        {[0.35, 0.65, 1].map((t, ri) => (
+          <path
+            key={t}
+            d={waveRing(cx, cy, maxR * t, swell + ri * 0.7, drift)}
+            fill="none"
+            stroke="rgba(44,74,92,0.14)"
+            strokeWidth={1}
+            strokeDasharray={ri === 2 ? undefined : "3 6"}
+          />
+        ))}
+
+        {/* soft axis rays */}
         {axes.map((_, i) => {
           const a = -Math.PI / 2 + (i / axes.length) * Math.PI * 2;
+          const x2 = cx + Math.cos(a) * maxR;
+          const y2 = cy + Math.sin(a) * maxR;
           return (
-            <line
+            <path
               key={i}
-              x1={cx}
-              y1={cy}
-              x2={cx + Math.cos(a) * maxR}
-              y2={cy + Math.sin(a) * maxR}
-              stroke="rgba(21,23,26,0.14)"
+              d={waveRay(cx, cy, x2, y2, swell + i * 0.3)}
+              fill="none"
+              stroke="rgba(21,23,26,0.12)"
               strokeWidth={1}
             />
           );
         })}
-        {[0.33, 0.66, 1].map((t) => (
-          <circle
-            key={t}
-            cx={cx}
-            cy={cy}
-            r={maxR * t}
-            fill="none"
-            stroke="rgba(21,23,26,0.1)"
-            strokeDasharray={t === 1 ? undefined : "2 4"}
-          />
-        ))}
-        <polygon
-          points={poly}
-          fill="rgba(200,115,42,0.18)"
-          stroke="#C8732A"
-          strokeWidth={1.5}
+
+        {/* foam outline */}
+        <path
+          d={foamPath}
+          fill="none"
+          stroke="rgba(142,182,201,0.45)"
+          strokeWidth={1.25}
+          strokeDasharray="4 5"
         />
-        {points.map((p, i) => (
-          <g key={i}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={hover === i || dragging.current === i ? 8 : 5}
-              fill="#C8732A"
-              stroke="var(--paper)"
-              strokeWidth={2}
-              className="cursor-grab"
-              onPointerDown={(e) => {
-                dragging.current = i;
-                (e.target as Element).setPointerCapture(e.pointerId);
-                pulse("vertex", 0.55);
-              }}
-              onPointerEnter={() => setHover(i)}
-            />
-            <text
-              x={cx + Math.cos(p.a) * (maxR + 18)}
-              y={cy + Math.sin(p.a) * (maxR + 18)}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              style={{ fontSize: 10, fontFamily: "var(--font-text)" }}
-              className="fill-ink-2"
-            >
-              {axes[i]}
-            </text>
-          </g>
-        ))}
+
+        {/* liquid blob */}
+        <path
+          d={blobPath}
+          fill={`url(#blob-${gradId})`}
+          stroke="#C8732A"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+
+        {/* crest nodes */}
+        {points.map((p, i) => {
+          const active = hover === i || dragging.current === i;
+          return (
+            <g key={i}>
+              {active ? (
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={16 + swell * 2}
+                  fill="none"
+                  stroke="rgba(200,115,42,0.35)"
+                  strokeWidth={1}
+                />
+              ) : null}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={active ? 9 : 6}
+                fill="#C8732A"
+                stroke="var(--paper)"
+                strokeWidth={2}
+                className="cursor-grab"
+                onPointerDown={(e) => {
+                  dragging.current = i;
+                  (e.target as Element).setPointerCapture(e.pointerId);
+                  pulse("vertex", 0.55);
+                }}
+                onPointerEnter={() => setHover(i)}
+              />
+              <text
+                x={cx + Math.cos(p.a) * (maxR + 22)}
+                y={cy + Math.sin(p.a) * (maxR + 22)}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={{
+                  fontSize: 10,
+                  fontFamily: "var(--font-text)",
+                  letterSpacing: "0.03em",
+                  fill: active ? "#C8732A" : "#3A3D42",
+                }}
+              >
+                {axes[i]}
+              </text>
+            </g>
+          );
+        })}
       </svg>
-      {hover != null ? (
-        <p className="absolute bottom-0 left-0 right-0 text-center t-meta text-ink-2">
-          {axes[hover]} · {Math.round(values[hover] * 100)}
-        </p>
-      ) : null}
+      <p className="mt-1 text-center t-meta text-ink-2">
+        {hover != null
+          ? `${axes[hover]} · ${Math.round(values[hover] * 100)}`
+          : "liquid field · drag a crest"}
+      </p>
     </div>
   );
+}
+
+/** Closed cardinal spline through points */
+function cardinalLoop(
+  pts: { x: number; y: number }[],
+  tension = 0.35
+) {
+  if (pts.length < 2) return "";
+  const n = pts.length;
+  const get = (i: number) => pts[(i + n) % n];
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = get(i - 1);
+    const p1 = get(i);
+    const p2 = get(i + 1);
+    const p3 = get(i + 2);
+    const c1x = p1.x + ((p2.x - p0.x) * tension) / 6;
+    const c1y = p1.y + ((p2.y - p0.y) * tension) / 6;
+    const c2x = p2.x - ((p3.x - p1.x) * tension) / 6;
+    const c2y = p2.y - ((p3.y - p1.y) * tension) / 6;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
+  }
+  return d + " Z";
+}
+
+function waveRing(
+  cx: number,
+  cy: number,
+  r: number,
+  phase: number,
+  drift: number
+) {
+  const steps = 64;
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * Math.PI * 2;
+    const wobble =
+      Math.sin(t * 3 + phase) * (r * 0.035) +
+      Math.sin(t * 5 - drift) * (r * 0.02);
+    const x = cx + Math.cos(t - Math.PI / 2) * (r + wobble);
+    const y = cy + Math.sin(t - Math.PI / 2) * (r + wobble);
+    d += i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+  }
+  return d + " Z";
+}
+
+function waveRay(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  phase: number
+) {
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  const bend = Math.sin(phase) * 4;
+  return `M ${x1} ${y1} Q ${mx + nx * bend} ${my + ny * bend} ${x2} ${y2}`;
 }
 
 export function SigilMark({
@@ -147,15 +280,17 @@ export function SigilMark({
   playable?: boolean;
 }) {
   const { pulse } = useTape();
+  const { value: swell } = useSwellLFO(0.14, 0.03);
   const n = values.length || 8;
   const cx = size / 2;
   const cy = size / 2;
   const maxR = size * 0.38;
   const pts = values.map((v, i) => {
     const a = -Math.PI / 2 + (i / n) * Math.PI * 2;
-    const r = Math.max(0.08, v) * maxR;
-    return `${cx + Math.cos(a) * r},${cy + Math.sin(a) * r}`;
+    const r = Math.max(0.1, v) * maxR * (1 + swell * 0.05);
+    return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
   });
+  const path = cardinalLoop(pts, 0.4);
 
   return (
     <button
@@ -166,11 +301,11 @@ export function SigilMark({
       aria-label={playable ? "play sigil" : "sigil"}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <polygon
-          points={pts.join(" ")}
-          fill="rgba(44,74,92,0.15)"
+        <path
+          d={path}
+          fill="rgba(44,74,92,0.18)"
           stroke="#2C4A5C"
-          strokeWidth={1.25}
+          strokeWidth={1.5}
         />
       </svg>
     </button>

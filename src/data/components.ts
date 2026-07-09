@@ -183,8 +183,8 @@ export const components: ComponentDoc[] = [
     category: "control",
     traditional: "Multi-slider form / radar chart",
     summary:
-      "N-axis draggable polygon. Vertices project onto axes; the shape is the value. Optional per-axis tones.",
-    when: "Multi-dimensional state that should read as one object — preferences, mood, weights.",
+      "A liquid blob through N axis crests. Cardinal spline, tidal rings, breathing swell — the shape is the value, not a straight-edged radar.",
+    when: "Multi-dimensional state that should read as one living object — preferences, mood, weights.",
     props: [
       { name: "axes", type: "string[]", note: "Axis labels" },
       { name: "values", type: "number[]", note: "0..1 per axis" },
