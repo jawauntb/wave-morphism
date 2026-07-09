@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useTape } from "@/lib/tape";
 import { useSwellLFO } from "@/lib/motion";
 
@@ -11,6 +12,10 @@ type Props = {
   className?: string;
 };
 
+/**
+ * Phase Chip — a continuous sine rail with crest nodes.
+ * Selection is a standing-wave peak, not a bordered box.
+ */
 export function PhaseChip({
   options,
   value,
@@ -19,152 +24,198 @@ export function PhaseChip({
   className = "",
 }: Props) {
   const { pulse } = useTape();
-  const selected = new Set(Array.isArray(value) ? value : [value]);
-  const { value: swell } = useSwellLFO(0.15, 0.04);
+  const { value: swell, drift } = useSwellLFO(0.16, 0.045);
+  const [hover, setHover] = useState<number | null>(null);
+  const selected = useMemo(() => {
+    const set = new Set(Array.isArray(value) ? value : [value]);
+    return options.map((o) => set.has(o));
+  }, [options, value]);
+
+  const n = options.length;
+  const w = Math.max(320, n * 110);
+  const h = 96;
+  const padX = 36;
+  const midY = 42;
+  const amp = 16 + swell * 5;
+
+  const nodeX = (i: number) => padX + (i / Math.max(1, n - 1)) * (w - padX * 2);
+
+  // continuous rail through all nodes
+  const rail = useMemo(() => {
+    let d = "";
+    for (let x = 0; x <= w; x += 3) {
+      const t = x / w;
+      // base swell
+      let y =
+        midY +
+        Math.sin(t * Math.PI * 2 * 2.2 + swell * 1.8 + drift) * amp * 0.55 +
+        Math.sin(t * Math.PI * 2 * 5.5 - drift) * amp * 0.18;
+      // lift toward active / hovered nodes
+      for (let i = 0; i < n; i++) {
+        const nx = nodeX(i);
+        const dist = Math.abs(x - nx);
+        const influence = Math.exp(-Math.pow(dist / 42, 2));
+        const lift =
+          (selected[i] ? 1 : 0) * 14 +
+          (hover === i ? 8 : 0) +
+          (selected[i] ? swell * 3 : 0);
+        y -= influence * lift;
+      }
+      d += x === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+    }
+    return d;
+  }, [w, n, amp, swell, drift, selected, hover]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const foam = useMemo(() => {
+    let d = "";
+    for (let x = 0; x <= w; x += 4) {
+      const t = x / w;
+      const y =
+        midY +
+        10 +
+        Math.sin(t * Math.PI * 2 * 2.2 + swell * 1.8 + drift + 0.4) * amp * 0.35 +
+        Math.sin(t * Math.PI * 2 * 4.2 - swell) * 3;
+      d += x === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+    }
+    return d;
+  }, [w, amp, swell, drift, midY]);
+
+  const pick = (i: number) => {
+    const opt = options[i];
+    pulse("phase", 0.55);
+    if (multiple) {
+      const next = new Set(Array.isArray(value) ? value : [value]);
+      if (next.has(opt)) next.delete(opt);
+      else next.add(opt);
+      onChange(Array.from(next));
+    } else {
+      onChange(opt);
+    }
+  };
 
   return (
-    <div className={`flex flex-wrap gap-3 ${className}`} role="group">
-      {options.map((opt, i) => {
-        const on = selected.has(opt);
-        return (
-          <Chip
-            key={opt}
-            label={opt}
-            active={on}
-            phase={swell + i * 0.55}
-            onGhost={() => pulse("ghost", 0.15)}
-            onSelect={() => {
-              pulse("phase", 0.4);
-              if (multiple) {
-                const next = new Set(selected);
-                if (next.has(opt)) next.delete(opt);
-                else next.add(opt);
-                onChange(Array.from(next));
-              } else {
-                onChange(opt);
-              }
-            }}
-          />
-        );
-      })}
+    <div className={`relative w-full select-none ${className}`} role="group">
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="h-auto w-full"
+        style={{ minHeight: 96 }}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {/* depth wash */}
+        <defs>
+          <linearGradient id="phase-wash" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(142,182,201,0.12)" />
+            <stop offset="100%" stopColor="rgba(44,74,92,0.04)" />
+          </linearGradient>
+        </defs>
+        <rect width={w} height={h} fill="url(#phase-wash)" rx="0" />
+
+        {/* foam under-rail */}
+        <path
+          d={foam}
+          fill="none"
+          stroke="rgba(44,74,92,0.18)"
+          strokeWidth={1}
+          strokeDasharray="3 5"
+        />
+
+        {/* main phase rail */}
+        <path
+          d={rail}
+          fill="none"
+          stroke="rgba(44,74,92,0.75)"
+          strokeWidth={2.25}
+          strokeLinecap="round"
+        />
+
+        {/* nodes + hit targets */}
+        {options.map((opt, i) => {
+          const x = nodeX(i);
+          const active = selected[i];
+          const isHover = hover === i;
+          // sample rail y at node (approx)
+          const t = x / w;
+          let y =
+            midY +
+            Math.sin(t * Math.PI * 2 * 2.2 + swell * 1.8 + drift) * amp * 0.55;
+          y -= (active ? 14 : 0) + (isHover ? 8 : 0) + (active ? swell * 3 : 0);
+          const r = active ? 9 : isHover ? 7 : 5;
+
+          return (
+            <g key={opt}>
+              {/* standing-wave rings when active */}
+              {active ? (
+                <>
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={18 + swell * 3}
+                    fill="none"
+                    stroke="rgba(200,115,42,0.35)"
+                    strokeWidth={1}
+                  />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={26 + Math.abs(drift) * 4}
+                    fill="none"
+                    stroke="rgba(200,115,42,0.18)"
+                    strokeWidth={1}
+                  />
+                </>
+              ) : null}
+
+              {/* crest node */}
+              <circle
+                cx={x}
+                cy={y}
+                r={r}
+                fill={active ? "#C8732A" : isHover ? "#2C4A5C" : "var(--paper)"}
+                stroke={active ? "#C8732A" : "#2C4A5C"}
+                strokeWidth={1.75}
+              />
+
+              {/* label */}
+              <text
+                x={x}
+                y={h - 14}
+                textAnchor="middle"
+                className="fill-ink"
+                style={{
+                  fontSize: 11,
+                  fontFamily: "var(--font-text)",
+                  letterSpacing: "0.04em",
+                  fill: active ? "#C8732A" : isHover ? "#15171A" : "#3A3D42",
+                }}
+              >
+                {opt}
+              </text>
+
+              {/* invisible hit target */}
+              <rect
+                x={x - 40}
+                y={0}
+                width={80}
+                height={h}
+                fill="transparent"
+                className="cursor-pointer"
+                onMouseEnter={() => {
+                  setHover(i);
+                  pulse("ghost", 0.12);
+                }}
+                onMouseLeave={() => setHover(null)}
+                onClick={() => pick(i)}
+                role="button"
+                aria-pressed={active}
+                aria-label={opt}
+              />
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-1 text-center t-meta text-ink-2/70">
+        phase rail · crest = selected · hover lifts the node
+      </p>
     </div>
   );
-}
-
-function Chip({
-  label,
-  active,
-  phase,
-  onGhost,
-  onSelect,
-}: {
-  label: string;
-  active: boolean;
-  phase: number;
-  onGhost: () => void;
-  onSelect: () => void;
-}) {
-  const amp = active ? 4.8 : 3.2;
-  const path = liquidPill(100, 34, amp, phase);
-  const crest = crestLine(100, 34, phase);
-
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      className={`relative inline-flex min-h-[2.5rem] min-w-[4.5rem] items-center justify-center px-4 py-1.5 t-meta transition-colors duration-wave ${
-        active ? "text-ink" : "text-ink-2 hover:text-ink"
-      }`}
-      onMouseEnter={onGhost}
-      onClick={onSelect}
-    >
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-        viewBox="0 0 100 34"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <path
-          d={path}
-          fill={active ? "rgba(200,115,42,0.2)" : "rgba(44,74,92,0.06)"}
-        />
-        <path
-          d={path}
-          fill="none"
-          stroke={active ? "rgba(200,115,42,0.85)" : "rgba(21,23,26,0.35)"}
-          strokeWidth={1.5}
-          vectorEffect="non-scaling-stroke"
-        />
-        <path
-          d={crest}
-          fill="none"
-          stroke={active ? "rgba(200,115,42,0.7)" : "rgba(44,74,92,0.35)"}
-          strokeWidth={1}
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-      <span className="relative z-10">{label}</span>
-    </button>
-  );
-}
-
-function liquidPill(w: number, h: number, amp: number, phase: number) {
-  const inset = amp + 0.5;
-  const l = inset;
-  const r = w - inset;
-  const t = inset;
-  const b = h - inset;
-  const steps = 22;
-  let d = "";
-  for (let i = 0; i <= steps; i++) {
-    const p = i / steps;
-    const x = l + (r - l) * p;
-    const y =
-      t +
-      Math.sin(p * Math.PI * 2 * 1.5 + phase) * amp * 0.55 +
-      Math.sin(p * Math.PI * 2 * 3.2 - phase) * amp * 0.2;
-    d += i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
-  }
-  for (let i = 1; i <= steps; i++) {
-    const p = i / steps;
-    const y = t + (b - t) * p;
-    const x =
-      r +
-      Math.sin(p * Math.PI * 2 * 1.5 + phase * 1.3) * amp * 0.7 +
-      Math.sin(p * Math.PI * 2 * 2.8 - phase) * amp * 0.25;
-    d += ` L ${x} ${y}`;
-  }
-  for (let i = 1; i <= steps; i++) {
-    const p = i / steps;
-    const x = r - (r - l) * p;
-    const y =
-      b +
-      Math.sin(p * Math.PI * 2 * 1.5 - phase) * amp * 0.55 +
-      Math.sin(p * Math.PI * 2 * 3.2 + phase) * amp * 0.2;
-    d += ` L ${x} ${y}`;
-  }
-  for (let i = 1; i <= steps; i++) {
-    const p = i / steps;
-    const y = b - (b - t) * p;
-    const x =
-      l +
-      Math.sin(p * Math.PI * 2 * 1.5 - phase * 1.3) * amp * 0.7 +
-      Math.sin(p * Math.PI * 2 * 2.8 + phase) * amp * 0.25;
-    d += ` L ${x} ${y}`;
-  }
-  return d + " Z";
-}
-
-function crestLine(w: number, h: number, phase: number) {
-  const y0 = h * 0.58;
-  let d = `M ${w * 0.1} ${y0}`;
-  for (let x = w * 0.1; x <= w * 0.9; x += 4) {
-    const p = x / w;
-    const y =
-      y0 +
-      Math.sin(p * Math.PI * 2 * 2.5 + phase * 2) * 2.8 +
-      Math.sin(p * Math.PI * 2 * 5 - phase) * 1.2;
-    d += ` L ${x} ${y}`;
-  }
-  return d;
 }

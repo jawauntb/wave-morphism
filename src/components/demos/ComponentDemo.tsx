@@ -70,7 +70,7 @@ export function ComponentDemo({ slug }: { slug: string }) {
       );
     case "phase-chip":
       return (
-        <div className="p-8">
+        <div className="px-4 py-8 md:px-8">
           <PhaseChip
             options={["sine", "triangle", "square", "saw"]}
             value={chip}

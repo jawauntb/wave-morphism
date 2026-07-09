@@ -144,12 +144,12 @@ export const components: ComponentDoc[] = [
     category: "control",
     traditional: "Tabs / radio / toggle group",
     summary:
-      "Lowercase mono chips with ghost preview on hover and a phase-crossing active state. Selection feels like crossing a threshold.",
-    when: "Presets, modes, materials, waveforms — any exclusive or multi-select set.",
+      "A continuous sine rail with crest nodes. Selection is a standing-wave peak that lifts the rail — not a bordered box.",
+    when: "Presets, modes, materials, waveforms — any exclusive or multi-select set that should feel like crossing a threshold.",
     props: [
-      { name: "options", type: "string[]", note: "Chip labels" },
+      { name: "options", type: "string[]", note: "Chip labels along the rail" },
       { name: "value", type: "string | string[]", note: "Controlled value" },
-      { name: "ghost", type: "ReactNode", note: "Optional hover preview" },
+      { name: "multiple", type: "boolean", note: "Allow multiple crests" },
     ],
     snippet: `<PhaseChip
   options={["sine", "triangle", "square", "saw"]}
