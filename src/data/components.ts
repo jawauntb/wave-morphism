@@ -221,14 +221,14 @@ export const components: ComponentDoc[] = [
     category: "ritual",
     traditional: "Toggle / long-press button",
     summary:
-      "Hold past a threshold, then release to discharge — lightning pattern. Charge is visible as a rising crest.",
+      "A storm cell you charge by holding. Rising crest fills the field; release past threshold fires lightning bolts and a flash.",
     when: "Destructive or dramatic actions that should feel intentional.",
     props: [
-      { name: "thresholdMs", type: "number", note: "Default 800" },
+      { name: "thresholdMs", type: "number", note: "Default 900" },
       { name: "onDischarge", type: "() => void", note: "Fires on release after charge" },
     ],
     snippet: `<HoldDischarge
-  thresholdMs={800}
+  thresholdMs={900}
   onDischarge={strike}
 >
   hold for lightning

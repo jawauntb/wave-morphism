@@ -299,76 +299,269 @@ type HoldProps = {
   className?: string;
 };
 
+/**
+ * Hold Discharge — a storm cell you charge by holding.
+ * Rising crest fills the field; release past threshold fires lightning.
+ */
 export function HoldDischarge({
-  thresholdMs = 800,
+  thresholdMs = 900,
   onDischarge,
   children,
   className = "",
 }: HoldProps) {
   const { pulse } = useTape();
+  const { value: swell } = useSwellLFO(0.2, 0.05);
   const [charge, setCharge] = useState(0);
+  const [flash, setFlash] = useState(0);
+  const [holdingUi, setHoldingUi] = useState(false);
+  const [bolts, setBolts] = useState<{ id: number; path: string }[]>([]);
   const holding = useRef(false);
   const start = useRef(0);
   const raf = useRef(0);
+  const boltId = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chargeRef = useRef(0);
+  const flashRef = useRef(0);
+  chargeRef.current = charge;
+  flashRef.current = flash;
 
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    let frame = 0;
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const draw = (now: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const c = chargeRef.current;
+      const f = flashRef.current;
+      ctx.clearRect(0, 0, w, h);
+
+      // storm depth
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, `rgba(12,20,28,${0.15 + c * 0.55})`);
+      g.addColorStop(0.5, `rgba(30,50,70,${0.2 + c * 0.4})`);
+      g.addColorStop(1, `rgba(8,14,20,${0.35 + c * 0.5})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      // rising tide / charge crest
+      const waterTop = h * (1 - c * 0.78);
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 3) {
+        const y =
+          waterTop +
+          Math.sin(x * 0.04 + now * 0.004 + c * 6) * (4 + c * 10) +
+          Math.sin(x * 0.09 - now * 0.003) * (2 + c * 4);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      const water = ctx.createLinearGradient(0, waterTop, 0, h);
+      water.addColorStop(0, `rgba(142,182,201,${0.35 + c * 0.4})`);
+      water.addColorStop(0.5, `rgba(44,74,92,${0.45 + c * 0.35})`);
+      water.addColorStop(1, `rgba(200,115,42,${0.25 + c * 0.45})`);
+      ctx.fillStyle = water;
+      ctx.fill();
+
+      // crest highlight
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 3) {
+        const y =
+          waterTop +
+          Math.sin(x * 0.04 + now * 0.004 + c * 6) * (4 + c * 10);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle =
+        c > 0.95
+          ? `rgba(255,220,160,${0.7 + Math.sin(now * 0.02) * 0.3})`
+          : `rgba(242,238,230,${0.35 + c * 0.45})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // charge arcs when near full
+      if (c > 0.55) {
+        for (let i = 0; i < 3; i++) {
+          const ax = w * (0.2 + i * 0.3);
+          ctx.beginPath();
+          ctx.moveTo(ax, waterTop + 8);
+          let px = ax;
+          let py = waterTop + 8;
+          for (let s = 0; s < 5; s++) {
+            px += (Math.random() - 0.5) * 18;
+            py -= h * 0.08 * c;
+            ctx.lineTo(px, py);
+          }
+          ctx.strokeStyle = `rgba(200,220,255,${(c - 0.55) * 0.9})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      // discharge flash
+      if (f > 0) {
+        ctx.fillStyle = `rgba(255,245,220,${f * 0.55})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      frame = requestAnimationFrame(draw);
+    };
+    frame = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+    };
+  }, []);
 
   const tick = () => {
     if (!holding.current) return;
     const p = Math.min(1, (performance.now() - start.current) / thresholdMs);
     setCharge(p);
     if (p < 1) raf.current = requestAnimationFrame(tick);
-    else pulse("charged", 0.7);
+    else pulse("charged", 0.85);
   };
 
-  const crest = chargePath(100, 40, charge);
+  const fireLightning = () => {
+    const paths = Array.from({ length: 3 }, (_, i) => {
+      let d = `M ${30 + i * 50} 8`;
+      let x = 30 + i * 50;
+      let y = 8;
+      for (let s = 0; s < 7; s++) {
+        x += (Math.random() - 0.5) * 28;
+        y += 10 + Math.random() * 8;
+        d += ` L ${x} ${y}`;
+      }
+      return { id: ++boltId.current, path: d };
+    });
+    setBolts(paths);
+    setFlash(1);
+    const t0 = performance.now();
+    const fade = (now: number) => {
+      const p = 1 - (now - t0) / 500;
+      setFlash(Math.max(0, p));
+      if (p > 0) requestAnimationFrame(fade);
+      else setBolts([]);
+    };
+    requestAnimationFrame(fade);
+  };
+
+  const amp = 4 + charge * 5 + Math.abs(swell) * 1.5;
+  const shell = liquidShell(200, 100, amp, swell * 2 + charge * 4);
 
   return (
     <button
       type="button"
-      className={`relative inline-flex min-h-[2.75rem] items-center overflow-visible px-5 py-3 t-meta text-sea ${className}`}
-      onPointerDown={() => {
+      className={`relative block w-full max-w-md overflow-visible select-none touch-none ${className}`}
+      style={{ minHeight: 140 }}
+      onPointerDown={(e) => {
+        e.preventDefault();
         holding.current = true;
+        setHoldingUi(true);
         start.current = performance.now();
-        pulse("hold", 0.3);
+        pulse("hold", 0.4);
         raf.current = requestAnimationFrame(tick);
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }}
       onPointerUp={() => {
-        const ready = charge >= 0.98;
+        const ready = charge >= 0.97;
         holding.current = false;
+        setHoldingUi(false);
         cancelAnimationFrame(raf.current);
         if (ready) {
           pulse("discharge", 1);
+          fireLightning();
           onDischarge();
-        } else pulse("abort", 0.2);
+        } else {
+          pulse("abort", 0.25);
+        }
         setCharge(0);
       }}
-      onPointerLeave={() => {
-        if (!holding.current) return;
+      onPointerCancel={() => {
         holding.current = false;
+        setHoldingUi(false);
         cancelAnimationFrame(raf.current);
         setCharge(0);
       }}
     >
       <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        viewBox="0 0 100 40"
+        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+        viewBox="0 0 200 100"
         preserveAspectRatio="none"
         aria-hidden
       >
+        <path d={shell} fill="rgba(12,20,28,0.92)" />
         <path
-          d={crest}
-          fill={`rgba(44,74,92,${0.08 + charge * 0.25})`}
-          stroke="rgba(44,74,92,0.55)"
-          strokeWidth={1.1}
+          d={shell}
+          fill="none"
+          stroke={
+            charge > 0.95
+              ? "rgba(255,220,160,0.95)"
+              : charge > 0.4
+                ? "rgba(142,182,201,0.8)"
+                : "rgba(44,74,92,0.65)"
+          }
+          strokeWidth={2}
           vectorEffect="non-scaling-stroke"
         />
-        <path
-          d={`M 0 40 L 0 ${40 - charge * 28} Q ${50 * charge} ${8 - charge * 6} ${100 * charge} ${40 - charge * 20} L ${100 * charge} 40 Z`}
-          fill="rgba(142,182,201,0.35)"
-        />
+        {bolts.map((b) => (
+          <path
+            key={b.id}
+            d={b.path}
+            fill="none"
+            stroke="rgba(255,245,210,0.95)"
+            strokeWidth={1.75}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
       </svg>
-      <span className="relative z-10">{children}</span>
+
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none absolute inset-[8px] h-[calc(100%-16px)] w-[calc(100%-16px)]"
+        aria-hidden
+      />
+
+      <span className="relative z-10 flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-6 py-8">
+        <span
+          className="t-meta tracking-wide"
+          style={{
+            color:
+              charge > 0.95
+                ? "#FFE8B0"
+                : charge > 0.3
+                  ? "#E8F0F4"
+                  : "#8eb6c9",
+          }}
+        >
+          {children}
+        </span>
+        <span className="font-mono text-[11px] tabular-nums text-paper/70">
+          {holdingUi || charge > 0
+            ? charge >= 0.97
+              ? "release to strike"
+              : `charging ${Math.round(charge * 100)}%`
+            : "press & hold"}
+        </span>
+      </span>
     </button>
   );
 }

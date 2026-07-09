@@ -113,8 +113,8 @@ export function ComponentDemo({ slug }: { slug: string }) {
       );
     case "hold-discharge":
       return (
-        <div className="flex flex-col items-center gap-4 p-10">
-          <HoldDischarge onDischarge={() => setMsg("discharged.")}>
+        <div className="flex flex-col items-center gap-4 px-6 py-10">
+          <HoldDischarge onDischarge={() => setMsg("struck — the room flashes.")}>
             hold for lightning
           </HoldDischarge>
           <p className="t-meta text-ink-2">{msg}</p>
