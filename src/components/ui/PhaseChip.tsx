@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { useTape } from "@/lib/tape";
-import { useSwellLFO } from "@/lib/motion";
+import { IDLE_AMP, useSwellLFO } from "@/lib/motion";
 
 type Props = {
   options: string[];
@@ -13,8 +13,8 @@ type Props = {
 };
 
 /**
- * Phase Chip — a continuous sine rail with crest nodes.
- * Selection is a standing-wave peak, not a bordered box.
+ * Phase Chip — change verb. Crest nodes on a phase rail.
+ * Idle amp ≈ 0; hover/selection lifts the standing wave.
  */
 export function PhaseChip({
   options,
@@ -36,7 +36,8 @@ export function PhaseChip({
   const h = 96;
   const padX = 36;
   const midY = 42;
-  const amp = 16 + swell * 5;
+  const activeLift = selected.some(Boolean) || hover !== null ? 1 : IDLE_AMP;
+  const amp = 10 + swell * 3 * activeLift;
 
   const nodeX = (i: number) => padX + (i / Math.max(1, n - 1)) * (w - padX * 2);
 
@@ -93,8 +94,38 @@ export function PhaseChip({
     }
   };
 
+  const focusIndex = (() => {
+    const i = selected.findIndex(Boolean);
+    return i >= 0 ? i : 0;
+  })();
+
+  const onRailKey = (e: KeyboardEvent) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      pick(Math.min(n - 1, focusIndex + 1));
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      pick(Math.max(0, focusIndex - 1));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      pick(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      pick(n - 1);
+    } else if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      pick(focusIndex);
+    }
+  };
+
   return (
-    <div className={`relative w-full select-none ${className}`} role="group">
+    <div
+      className={`relative w-full select-none ${className}`}
+      role={multiple ? "group" : "radiogroup"}
+      aria-label="phase"
+      tabIndex={0}
+      onKeyDown={onRailKey}
+    >
       <svg
         viewBox={`0 0 ${w} ${h}`}
         className="h-auto w-full"
@@ -104,8 +135,8 @@ export function PhaseChip({
         {/* depth wash */}
         <defs>
           <linearGradient id="phase-wash" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(142,182,201,0.12)" />
-            <stop offset="100%" stopColor="rgba(44,74,92,0.04)" />
+            <stop offset="0%" stopColor="rgba(var(--crest-rgb), 0.12)" />
+            <stop offset="100%" stopColor="rgba(var(--sea-rgb), 0.04)" />
           </linearGradient>
         </defs>
         <rect width={w} height={h} fill="url(#phase-wash)" rx="0" />
@@ -114,7 +145,7 @@ export function PhaseChip({
         <path
           d={foam}
           fill="none"
-          stroke="rgba(44,74,92,0.18)"
+          stroke="rgba(var(--sea-rgb), 0.18)"
           strokeWidth={1}
           strokeDasharray="3 5"
         />
@@ -123,7 +154,7 @@ export function PhaseChip({
         <path
           d={rail}
           fill="none"
-          stroke="rgba(44,74,92,0.75)"
+          stroke="rgba(var(--sea-rgb), 0.75)"
           strokeWidth={2.25}
           strokeLinecap="round"
         />
@@ -151,7 +182,7 @@ export function PhaseChip({
                     cy={y}
                     r={18 + swell * 3}
                     fill="none"
-                    stroke="rgba(200,115,42,0.35)"
+                    stroke="rgba(var(--candle-rgb), 0.35)"
                     strokeWidth={1}
                   />
                   <circle
@@ -159,7 +190,7 @@ export function PhaseChip({
                     cy={y}
                     r={26 + Math.abs(drift) * 4}
                     fill="none"
-                    stroke="rgba(200,115,42,0.18)"
+                    stroke="rgba(var(--candle-rgb), 0.18)"
                     strokeWidth={1}
                   />
                 </>
@@ -170,8 +201,8 @@ export function PhaseChip({
                 cx={x}
                 cy={y}
                 r={r}
-                fill={active ? "#C8732A" : isHover ? "#2C4A5C" : "var(--paper)"}
-                stroke={active ? "#C8732A" : "#2C4A5C"}
+                fill={active ? "var(--candle)" : isHover ? "var(--sea)" : "var(--paper)"}
+                stroke={active ? "var(--candle)" : "var(--sea)"}
                 strokeWidth={1.75}
               />
 
@@ -185,7 +216,7 @@ export function PhaseChip({
                   fontSize: 11,
                   fontFamily: "var(--font-text)",
                   letterSpacing: "0.04em",
-                  fill: active ? "#C8732A" : isHover ? "#15171A" : "#3A3D42",
+                  fill: active ? "var(--candle)" : isHover ? "var(--ink)" : "var(--ink-2)",
                 }}
               >
                 {opt}
@@ -205,9 +236,10 @@ export function PhaseChip({
                 }}
                 onMouseLeave={() => setHover(null)}
                 onClick={() => pick(i)}
-                role="button"
-                aria-pressed={active}
+                role={multiple ? "checkbox" : "radio"}
+                aria-checked={active}
                 aria-label={opt}
+                tabIndex={-1}
               />
             </g>
           );

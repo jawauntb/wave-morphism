@@ -1,53 +1,67 @@
 "use client";
 
+import Link from "next/link";
 import {
   useId,
   useRef,
   useState,
   type ButtonHTMLAttributes,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import { useTape } from "@/lib/tape";
-import { useSwellLFO } from "@/lib/motion";
+import { IDLE_AMP, useSwellLFO } from "@/lib/motion";
 
 type Register = "devotional" | "operational" | "oceanic";
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
+type SharedProps = {
   register?: Register;
   ritual?: boolean;
+  /** quiet = product density; expressive = hero / ritual amp. */
+  density?: "quiet" | "expressive";
   children: ReactNode;
+  className?: string;
+  href?: string;
+  onClick?: (e: MouseEvent<HTMLElement>) => void;
 };
 
-const palette: Record<
-  Register,
-  { stroke: string; fill: string; crest: string; text: string }
-> = {
-  oceanic: {
-    stroke: "#2C4A5C",
-    fill: "rgba(44,74,92,0.14)",
-    crest: "rgba(142,182,201,0.85)",
-    text: "#2C4A5C",
-  },
-  devotional: {
-    stroke: "#C8732A",
-    fill: "rgba(200,115,42,0.16)",
-    crest: "rgba(200,115,42,0.9)",
-    text: "#15171A",
-  },
-  operational: {
-    stroke: "rgba(21,23,26,0.55)",
-    fill: "rgba(21,23,26,0.06)",
-    crest: "rgba(44,74,92,0.55)",
-    text: "#15171A",
-  },
-};
+type Props = SharedProps &
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children" | "onClick">;
+
+function registerColors(register: Register) {
+  if (register === "oceanic") {
+    return {
+      stroke: "var(--sea)",
+      fill: "rgba(var(--sea-rgb), 0.14)",
+      crest: "rgba(var(--crest-rgb), 0.85)",
+      text: "var(--sea)",
+    };
+  }
+  if (register === "devotional") {
+    return {
+      stroke: "var(--candle)",
+      fill: "rgba(var(--candle-rgb), 0.16)",
+      crest: "rgba(var(--candle-rgb), 0.9)",
+      text: "var(--ink)",
+    };
+  }
+  return {
+    stroke: "rgba(var(--ink-rgb), 0.55)",
+    fill: "rgba(var(--ink-rgb), 0.06)",
+    crest: "rgba(var(--sea-rgb), 0.55)",
+    text: "var(--ink)",
+  };
+}
 
 export function WaveButton({
   register = "operational",
   ritual = false,
+  density = "quiet",
   children,
   className = "",
+  href,
   onClick,
+  type = "button",
   ...rest
 }: Props) {
   const { pulse } = useTape();
@@ -57,46 +71,46 @@ export function WaveButton({
   const [pressed, setPressed] = useState(false);
   const id = useRef(0);
   const clipId = useId().replace(/:/g, "");
-  const { value: swell, drift } = useSwellLFO(0.18, 0.05);
-  const colors = palette[register];
+  const expressive = density === "expressive" || ritual;
+  const { value: swell, drift } = useSwellLFO(expressive ? 0.18 : 0.14, expressive ? 0.05 : 0.03);
+  const colors = registerColors(register);
 
-  const amp = (ritual ? 5.5 : 4.2) + Math.abs(swell) * 2.2 + (hover ? 1.4 : 0) + (pressed ? 1.8 : 0);
-  const phase = swell * 1.6 + drift * 0.5 + (hover ? 0.6 : 0);
+  // Verb: press. Idle amp ≈ 0 — motion only on hover/press.
+  const activity = pressed ? 1 : hover ? 0.65 : 0;
+  const calm = IDLE_AMP + activity * (1 - IDLE_AMP);
+  const baseAmp = expressive ? 2.2 : 1.15;
+  const amp =
+    baseAmp * calm +
+    Math.abs(swell) * (expressive ? 0.7 : 0.25) * calm +
+    (hover ? (expressive ? 0.8 : 0.45) : 0) +
+    (pressed ? (expressive ? 1.1 : 0.65) : 0);
+  const phase = (swell * 1.2 + drift * 0.4) * calm + (hover ? 0.45 : 0);
   const path = liquidPill(120, 44, amp, phase);
-  const crest = crestLine(120, 44, phase, swell);
+  const crest = crestLine(120, 44, phase, swell * calm);
 
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className={`wave-btn relative inline-flex min-h-[3rem] min-w-[7.5rem] items-center justify-center overflow-visible px-6 py-3 t-meta transition-colors duration-wave ${className}`}
-      style={{ color: colors.text }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => {
-        setHover(false);
-        setPressed(false);
-      }}
-      onPointerDown={() => setPressed(true)}
-      onPointerUp={() => setPressed(false)}
-      onClick={(e) => {
-        const el = ref.current;
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          const next = {
-            id: ++id.current,
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-          };
-          setRipples((r) => [...r, next]);
-          setTimeout(() => {
-            setRipples((r) => r.filter((x) => x.id !== next.id));
-          }, ritual ? 1000 : 650);
-        }
-        pulse(ritual ? "ritual" : "press", ritual ? 0.75 : 0.45);
-        onClick?.(e);
-      }}
-      {...rest}
-    >
+  const shellClass = `wave-btn relative inline-flex min-h-[3rem] min-w-[7.5rem] items-center justify-center overflow-visible px-6 py-3 t-meta transition-colors duration-wave ${className}`;
+
+  const spawnRipple = (
+    clientX: number,
+    clientY: number,
+    el: HTMLElement | null = ref.current
+  ) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const next = {
+      id: ++id.current,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+    setRipples((r) => [...r, next]);
+    setTimeout(() => {
+      setRipples((r) => r.filter((x) => x.id !== next.id));
+    }, ritual ? 1000 : 650);
+    pulse(ritual ? "ritual" : "press", ritual ? 0.75 : 0.45);
+  };
+
+  const visuals = (
+    <>
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
         viewBox="0 0 120 44"
@@ -144,6 +158,49 @@ export function WaveButton({
         />
       ))}
       <span className="relative z-10">{children}</span>
+    </>
+  );
+
+  const interaction = {
+    style: { color: colors.text } as const,
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => {
+      setHover(false);
+      setPressed(false);
+    },
+    onPointerDown: () => setPressed(true),
+    onPointerUp: () => setPressed(false),
+  };
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={shellClass}
+        {...interaction}
+        onClick={(e) => {
+          spawnRipple(e.clientX, e.clientY, e.currentTarget);
+          onClick?.(e);
+        }}
+      >
+        {visuals}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      ref={ref}
+      type={type}
+      className={shellClass}
+      {...interaction}
+      onClick={(e) => {
+        spawnRipple(e.clientX, e.clientY, e.currentTarget);
+        onClick?.(e);
+      }}
+      {...rest}
+    >
+      {visuals}
     </button>
   );
 }

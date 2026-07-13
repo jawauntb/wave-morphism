@@ -17,6 +17,13 @@ const config: Config = {
         candle: "var(--candle)",
         sea: "var(--sea)",
         kept: "var(--kept)",
+        field: "var(--field)",
+        deep: "var(--deep)",
+        "deep-2": "var(--deep-2)",
+        crest: "var(--crest)",
+        haze: "var(--haze)",
+        "on-deep": "var(--on-deep)",
+        "on-deep-2": "var(--on-deep-2)",
       },
       maxWidth: {
         site: "var(--max)",

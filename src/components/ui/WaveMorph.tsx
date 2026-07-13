@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { useSwellLFO } from "@/lib/motion";
+import { BasinCaustic } from "@/components/canvas/BasinCaustic";
 
 /** Living sine divider — replaces hairline rules */
 export function WaveRule({
@@ -94,26 +95,50 @@ export function MorphShell({
   className = "",
   pad = true,
   dark = false,
+  caustic = false,
+  quiet = false,
+  density,
 }: {
   children: ReactNode;
   className?: string;
   pad?: boolean;
   dark?: boolean;
+  /** Quiet WebGL under-basin material. Prefer on chrome basins only. */
+  caustic?: boolean;
+  /** Lower edge amplitude — docs chrome / dense layouts. Prefer density="quiet". */
+  quiet?: boolean;
+  /** quiet = product chrome; expressive = hero / showcase. Defaults from `quiet`. */
+  density?: "quiet" | "expressive";
 }) {
   const id = useId().replace(/:/g, "");
-  const { value: swell, drift } = useSwellLFO(0.13, 0.04);
+  const calmMode = (density ?? (quiet ? "quiet" : "expressive")) === "quiet";
+  const { value: swell, drift } = useSwellLFO(
+    calmMode ? 0.09 : 0.13,
+    calmMode ? 0.025 : 0.04
+  );
   const w = 100;
   const h = 100;
-  // ~4–7% of each axis — visible on both short and wide panels
-  const ax = 4.5 + swell * 1.8 + Math.abs(drift) * 0.8;
-  const ay = 5.5 + drift * 1.6 + Math.abs(swell) * 1.2;
+  // Quiet = static geometry + tiny swell. Expressive = restrained breath.
+  // Idle amp ≈ 0 on product chrome — if it moves at rest, it's wrong.
+  const calm = calmMode ? 0.06 : 0.35;
+  const ax =
+    (calmMode ? 1.1 : 2.2) +
+    swell * (calmMode ? 0.08 : 0.55) * calm +
+    Math.abs(drift) * 0.12 * calm;
+  const ay =
+    (calmMode ? 1.2 : 2.5) +
+    drift * (calmMode ? 0.08 : 0.45) * calm +
+    Math.abs(swell) * 0.25 * calm;
   const inset = Math.max(ax, ay) + 0.5;
 
   const borderPath = wavyRect(w, h, inset, ax, ay, swell * 1.4 + drift);
   const fillPath = wavyRect(w, h, inset + 0.15, ax * 0.92, ay * 0.92, swell * 1.4 + drift + 0.2);
 
   return (
-    <div className={`relative isolate ${className}`}>
+    <div
+      className={`relative isolate ${dark ? "surface-deep" : ""} ${className}`}
+      data-surface={dark ? "deep" : "paper"}
+    >
       <svg
         className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-visible"
         viewBox={`0 0 ${w} ${h}`}
@@ -122,9 +147,24 @@ export function MorphShell({
       >
         <defs>
           <linearGradient id={`mg-${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={dark ? "#1a3040" : "#e4ddd0"} />
-            <stop offset="45%" stopColor={dark ? "#0c1822" : "#f2eee6"} />
-            <stop offset="100%" stopColor={dark ? "#152830" : "#d5e0e6"} />
+            <stop
+              offset="0%"
+              stopColor={
+                dark ? "rgba(var(--deep-rgb), 0.88)" : "rgba(var(--paper-2-rgb), 0.78)"
+              }
+            />
+            <stop
+              offset="45%"
+              stopColor={
+                dark ? "rgba(var(--deep-rgb), 0.82)" : "rgba(var(--paper-rgb), 0.72)"
+              }
+            />
+            <stop
+              offset="100%"
+              stopColor={
+                dark ? "rgba(var(--sea-rgb), 0.55)" : "rgba(var(--haze-rgb), 0.45)"
+              }
+            />
           </linearGradient>
           <clipPath id={`clip-${id}`}>
             <path d={fillPath} />
@@ -134,18 +174,28 @@ export function MorphShell({
         <path
           d={borderPath}
           fill="none"
-          stroke={dark ? "rgba(142,182,201,0.55)" : "rgba(44,74,92,0.45)"}
+          stroke={
+            dark ? "rgba(var(--crest-rgb), 0.55)" : "rgba(var(--sea-rgb), 0.45)"
+          }
           strokeWidth={0.55}
           vectorEffect="non-scaling-stroke"
         />
         <path
           d={innerCrest(w, h, inset, swell, drift)}
           fill="none"
-          stroke={dark ? "rgba(200,115,42,0.35)" : "rgba(200,115,42,0.28)"}
+          stroke="rgba(var(--candle-rgb), 0.3)"
           strokeWidth={0.35}
           vectorEffect="non-scaling-stroke"
         />
       </svg>
+      {caustic && !dark ? (
+        <div
+          className="pointer-events-none absolute inset-[6%] z-[1] overflow-hidden opacity-55 mix-blend-soft-light"
+          aria-hidden
+        >
+          <BasinCaustic intensity={0.4} />
+        </div>
+      ) : null}
       <div className={`relative z-10 ${pad ? "p-8 md:p-10" : ""}`}>
         {children}
       </div>
@@ -374,9 +424,9 @@ export function SwellInstrument() {
     <div className="relative overflow-hidden">
       <canvas ref={canvasRef} className="h-64 w-full md:h-72" />
       <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-wrap justify-center gap-x-6 gap-y-1 px-3">
-        <span className="t-meta text-[#8eb6c9]">swell {swell.toFixed(2)}</span>
-        <span className="t-meta text-[#c8732a]">drift {drift.toFixed(2)}</span>
-        <span className="t-meta text-paper/50">0.14 Hz · shared phase</span>
+        <span className="t-meta text-crest">swell {swell.toFixed(2)}</span>
+        <span className="t-meta text-candle">drift {drift.toFixed(2)}</span>
+        <span className="t-meta text-on-deep/50">0.14 Hz · shared phase</span>
       </div>
     </div>
   );

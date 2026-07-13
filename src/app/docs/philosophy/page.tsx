@@ -31,6 +31,11 @@ export default function PhilosophyPage() {
           wave-morphism means borders breathe, dividers are sine rules, props arrive as
           tides, and tables dissolve into wakes.
         </p>
+        <p>
+          And the water is not only ocean. See{" "}
+          <a href="/docs/scales">water scales</a> — droplet through storm, including ice,
+          steam, rain, and cloud — each with a UI job.
+        </p>
 
         <h2>registers</h2>
       </div>

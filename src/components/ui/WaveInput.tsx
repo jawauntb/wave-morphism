@@ -554,7 +554,7 @@ export function HoldDischarge({
         >
           {children}
         </span>
-        <span className="font-mono text-[11px] tabular-nums text-paper/70">
+        <span className="font-mono text-[11px] tabular-nums text-on-deep/70">
           {holdingUi || charge > 0
             ? charge >= 0.97
               ? "release to strike"

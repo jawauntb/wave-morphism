@@ -391,11 +391,11 @@ export function SeaSurface({
         className="pointer-events-none absolute inset-0 h-full w-full"
       />
       {label ? (
-        <span className="pointer-events-none absolute left-4 top-4 z-10 t-eyebrow text-paper/80">
+        <span className="pointer-events-none absolute left-4 top-4 z-10 t-eyebrow text-on-deep/80">
           {label}
         </span>
       ) : null}
-      <span className="pointer-events-none absolute bottom-3 right-4 z-10 t-meta text-paper/40">
+      <span className="pointer-events-none absolute bottom-3 right-4 z-10 t-meta text-on-deep/40">
         webgl caustics · touch for ripples
       </span>
     </div>

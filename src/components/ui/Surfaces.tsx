@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTape } from "@/lib/tape";
 import { useSwellLFO } from "@/lib/motion";
 import { WaveRule } from "@/components/ui/WaveMorph";
+import { themeCanvasColors, rgba } from "@/lib/colors";
 
 type DrawerProps = {
   open: boolean;
@@ -169,7 +170,8 @@ export function Oscilloscope({ className = "", height = 180, stress = 0.35 }: Sc
       ctx.fillRect(0, 0, w, h);
 
       // grid
-      ctx.strokeStyle = "rgba(142,182,201,0.08)";
+      const tc = themeCanvasColors();
+      ctx.strokeStyle = rgba(tc.crestRgb, 0.08);
       ctx.lineWidth = 1;
       for (let gy = 0; gy < h; gy += h / 6) {
         ctx.beginPath();
@@ -184,7 +186,7 @@ export function Oscilloscope({ className = "", height = 180, stress = 0.35 }: Sc
         ctx.stroke();
       }
 
-      const colors = ["#C8732A", "#6ec8b8", "#8eb6c9"];
+      const colors = [tc.candle, tc.crest, tc.sea];
       buffers.forEach((buf, bi) => {
         const y0 = (h / 4) * (bi + 1);
         // glow pass
@@ -308,8 +310,9 @@ export function ProgressWake({
       ctx.lineTo(end, h);
       ctx.closePath();
       const wake = ctx.createLinearGradient(0, 0, 0, h);
-      wake.addColorStop(0, "rgba(142,182,201,0.35)");
-      wake.addColorStop(1, "rgba(44,74,92,0.08)");
+      const tc = themeCanvasColors();
+      wake.addColorStop(0, rgba(tc.crestRgb, 0.35));
+      wake.addColorStop(1, rgba(tc.seaRgb, 0.08));
       ctx.fillStyle = wake;
       ctx.fill();
 
@@ -325,7 +328,7 @@ export function ProgressWake({
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = value == null ? "#C8732A" : "#8eb6c9";
+      ctx.strokeStyle = value == null ? tc.candle : tc.crest;
       ctx.lineWidth = 2;
       ctx.stroke();
 
@@ -351,9 +354,9 @@ export function ProgressWake({
   if (variant === "fill") {
     const p = value ?? 0.4 + shimmer * 0.25 + swell * 0.05;
     return (
-      <div className={`relative h-4 overflow-hidden bg-[#0c141c] ${className}`}>
+      <div className={`relative h-4 overflow-hidden bg-deep surface-deep ${className}`}>
         <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-candle via-sea to-[#8eb6c9] transition-[width] duration-wave"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-candle via-sea to-crest transition-[width] duration-wave"
           style={{ width: `${Math.max(4, Math.min(100, p * 100))}%` }}
         />
         <div
@@ -382,10 +385,10 @@ export function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="relative overflow-hidden bg-[#0c141c]">
+    <div className="relative overflow-hidden bg-deep surface-deep">
       <button
         type="button"
-        className="absolute right-3 top-3 z-10 t-meta text-paper/60 hover:text-paper"
+        className="absolute right-3 top-3 z-10 t-meta text-on-deep/60 hover:text-on-deep"
         onClick={async () => {
           await navigator.clipboard.writeText(code);
           setCopied(true);
@@ -395,7 +398,7 @@ export function CodeBlock({ code }: { code: string }) {
       >
         {copied ? "copied" : "copy"}
       </button>
-      <pre className="overflow-x-auto p-5 text-[13px] leading-relaxed text-[#d7e0e6]">
+      <pre className="overflow-x-auto p-5 text-[13px] leading-relaxed text-on-deep/90">
         <code className="font-mono">{code}</code>
       </pre>
     </div>

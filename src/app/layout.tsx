@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/layout/Chrome";
-import { TapeStrip } from "@/components/canvas/TapeStrip";
+import { PageTide } from "@/components/layout/PageTide";
+import { AtmosphereLayer } from "@/components/layout/AtmosphereLayer";
+import { AtmosphereProvider } from "@/lib/atmosphere";
 import { TapeProvider } from "@/lib/tape";
+import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
 const display = Cormorant_Garamond({
@@ -37,13 +40,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${mono.variable} antialiased`}>
-        <TapeProvider>
-          <SiteHeader />
-          {children}
-          <div className="fixed bottom-0 inset-x-0 z-20">
-            <TapeStrip />
-          </div>
-        </TapeProvider>
+        <ThemeProvider>
+          <AtmosphereProvider defaultAmbient="css" defaultTapeStrip>
+            <TapeProvider>
+              <AtmosphereLayer />
+              <div className="relative z-10">
+                <SiteHeader />
+                <PageTide>{children}</PageTide>
+              </div>
+            </TapeProvider>
+          </AtmosphereProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

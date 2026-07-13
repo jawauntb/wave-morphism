@@ -1,61 +1,119 @@
+import Link from "next/link";
 import { DocsShell, PageHeader } from "@/components/layout/Chrome";
 import { CodeBlock } from "@/components/ui/Surfaces";
+import { MorphShell, WaveRule } from "@/components/ui/WaveMorph";
+import { getCoreComponents } from "@/data/components";
 
 export const metadata = { title: "Patterns" };
 
 export default function PatternsPage() {
+  const core = getCoreComponents();
+
   return (
     <DocsShell>
       <PageHeader
-        eyebrow="recipes"
+        eyebrow="law"
         title="patterns"
-        dek="Composition recipes for immersive scenes, shape-state, and mobile-safe instruments."
+        dek="Twelve surfaces. Three verbs. One material, one focus, one feedback. Everything else is attic."
       />
+
+      <MorphShell quiet density="quiet" className="mb-10">
+        <p className="t-eyebrow text-candle">twelve · {core.length}</p>
+        <ul className="mt-4 flex flex-wrap gap-x-3 gap-y-2">
+          {core.map((c) => (
+            <li key={c.slug}>
+              <Link
+                href={`/docs/components/${c.slug}`}
+                className="t-meta text-sea hover:text-candle"
+              >
+                {c.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </MorphShell>
 
       <div className="space-y-12">
         <Pattern
-          title="immersive scene"
-          body="Header floats. Footer omitted. Dark route palette. Scene owns the viewport below the header. Sound toggle + tape remain."
-          code={`// dark route shell
-<body data-route="ocean">
-  <SiteHeader theme="dark" />
-  <SeaSurface height="100vh" audioLock tilt />
-  <TapeStrip />
-</body>`}
+          title="three verbs"
+          body="Ban decoration motion. Idle amp ≈ 0. If it moves at rest, it's wrong."
+          code={`press  → WaveButton ripple + decay
+change → PhaseChip crest / SwellRail
+commit → HoldDischarge / CalmDecay / announce("keep")
+
+// shared clock
+useSwellLFO()
+IDLE_AMP = 0.02`}
         />
         <Pattern
-          title="shape as state"
-          body="Encode multi-axis values as a polygon. Render as compass, sigil, OG image, and music. Share via compact hash."
-          code={`const values = [0.7, 0.4, 0.55, 0.8, 0.3, 0.65, 0.5, 0.25];
-<ConcernPolygon axes={AXES} values={values} onChange={setValues} tones />
-<SigilMark values={values} playable />`}
+          title="one of each"
+          body="No second metaphor for the same job."
+          code={`material  BasinCaustic ≤1 / viewport (MorphShell caustic)
+focus     CausticFocusRoot (crest if reduced-motion)
+feedback  useWake().announce → tape + SteamPlume`}
         />
         <Pattern
-          title="tape feedback"
-          body="Replace toasts with pulses. Kind + intensity is enough. The strip is ambient memory."
-          code={`const { pulse } = useTape();
-pulse("keep", 0.7);
-pulse("ripple", amp);`}
+          title="Harbor"
+          body="The reference product — notes from the twelve only. Blind-test against glass."
+          code={`/harbor
+
+// empty state, list+detail, compose, publish, sink
+// no lab imports allowed on this route`}
         />
         <Pattern
-          title="mobile instruments"
-          body="Prefer tap-then-tap and rotary dials over dense vertex drags. Collapsible tune drawers. 44px targets. touch-action: none on canvases."
-          code={`<div data-touch-surface className="touch-none">
-  <RotaryDial value={amp} onChange={setAmp} rings={2} />
-  {/* collapse advanced sliders into DrawerWake on small screens */}
-</div>`}
+          title="density"
+          body="Tables, forms, nav, empty — hairline WaveRules, quiet shells, tide fields."
+          code={`<MorphShell quiet density="quiet" pad={false}>
+  <WaveRule amp={2} freq={6} />  {/* row hairline */}
+  <button className="…">row</button>
+</MorphShell>
+
+// empty
+<p className="font-serif italic">empty tide</p>
+<WaveButton density="quiet">show all</WaveButton>`}
         />
         <Pattern
-          title="web + mobile element plan"
-          body="Web leans on hover ghosts, dual-ring dials, and shaped prose. Mobile leans on hold-discharge, scrub canvases, multitouch ripples, and swipe-dismiss drawers. Same grammar — different affordances."
-          code={`| element   | web                     | mobile                  |
-| button    | hover ghost + ripple    | larger hit + haptic     |
-| slider    | rotary / polygon vertex | nested dial / scrub     |
-| select    | constellation panel     | full-bleed drawer       |
-| modal     | drawer wake             | swipe-dismiss sheet     |
-| feedback  | tape + tone             | tape + haptic           |`}
+          title="when to use what"
+          body="One job → one control from the twelve."
+          code={`| job         | use              |
+| press       | WaveButton       |
+| 0–1         | SwellRail        |
+| discrete    | PhaseChip        |
+| compose     | WaveInput        |
+| destroy     | HoldDischarge    |
+| undo/calm   | CalmDecay        |
+| panel       | MorphShell quiet |
+| divider     | WaveRule         |
+| overlay     | DrawerWake       |
+| focus       | CausticFocus     |
+| long scroll | UndertowScroll   |
+| feedback    | Tape / useWake   |`}
+        />
+        <Pattern
+          title="DX"
+          body="Copy path that compiles without reading philosophy."
+          code={`npm run wave -- core
+npm run wave -- button
+npm run wave -- wake
+
+// then open /harbor and steal the layout`}
         />
       </div>
+
+      <WaveRule className="my-12" amp={5} freq={3} />
+      <p className="t-meta text-ink-2">
+        <Link href="/harbor" className="text-candle hover:underline">
+          Harbor
+        </Link>{" "}
+        ·{" "}
+        <Link href="/docs/proof" className="text-candle hover:underline">
+          proof
+        </Link>{" "}
+        ·{" "}
+        <Link href="/docs/lab" className="text-candle hover:underline">
+          attic
+        </Link>
+      </p>
     </DocsShell>
   );
 }

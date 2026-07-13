@@ -22,7 +22,12 @@ export const axioms = [
   {
     id: "tape-is-time",
     title: "The tape is time",
-    body: "Meaningful gestures leave a pulse that drifts. State is a time series, not a snapshot. Feedback is a wake, not a toast.",
+    body: "Meaningful gestures leave a pulse that drifts. State is a time series, not a snapshot. Feedback is a wake, not a toast — useTape / useWake, SteamPlume for ephemeral copy.",
+  },
+  {
+    id: "one-basin",
+    title: "One basin per region",
+    body: "Shared under-island caustic is substance, not decoration. ≤1 BasinCaustic per viewport region. Undertow owns long scroll. Lab stays off the critical path.",
   },
   {
     id: "three-registers",
@@ -58,6 +63,11 @@ export const axioms = [
     id: "reduced-motion",
     title: "Reduced motion is respect",
     body: "Freeze animation. Keep single-frame interaction and audio cues when they still communicate. Stillness is not emptiness.",
+  },
+  {
+    id: "all-scales",
+    title: "Water at every scale",
+    body: "Droplet, rain, sink, pool, river, lake, beach, waves, ocean, clouds, snow, ice, steam, storm — each scale owns a physics, a motion register, and a UI job. Ocean is one octave, not the whole instrument.",
   },
 ] as const;
 

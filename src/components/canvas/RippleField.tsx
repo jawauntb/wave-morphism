@@ -197,10 +197,10 @@ export function RippleField({ className = "", height = 320 }: Props) {
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full cursor-crosshair" />
       <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-between px-4">
-        <span className="t-meta text-paper/50">
+        <span className="t-meta text-on-deep/50">
           {count} active · multitouch interferes
         </span>
-        <span className="t-meta text-paper/40">touch / drag / two fingers</span>
+        <span className="t-meta text-on-deep/40">touch / drag / two fingers</span>
       </div>
     </div>
   );

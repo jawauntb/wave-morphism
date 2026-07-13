@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  /* tidewater vellum — wave-morphism tokens */
+  /* tidewater vellum — default theme (overridden by ThemeProvider) */
   --paper: #f2eee6;
   --paper-2: #e8e2d5;
   --ink: #15171a;
@@ -14,6 +14,34 @@
   --kept: #6e5a2e;
   --open: #2c4a5c;
   --closed: #7a1f1f;
+  --field: #d5e0e4;
+  --deep: #0c1822;
+  --deep-2: #152830;
+  --crest: #8eb6c9;
+  --haze: #8eb6c9;
+  --on-deep: #f2eee6;
+  --on-deep-2: #b8cdd8;
+  --island: rgba(242, 238, 230, 0.72);
+  --island-2: rgba(242, 238, 230, 0.55);
+
+  --paper-rgb: 242, 238, 230;
+  --paper-2-rgb: 232, 226, 213;
+  --ink-rgb: 21, 23, 26;
+  --ink-2-rgb: 58, 61, 66;
+  --candle-rgb: 200, 115, 42;
+  --sea-rgb: 44, 74, 92;
+  --crest-rgb: 142, 182, 201;
+  --haze-rgb: 142, 182, 201;
+  --deep-rgb: 12, 24, 34;
+  --field-rgb: 213, 224, 228;
+  --on-deep-rgb: 242, 238, 230;
+  --on-deep-2-rgb: 184, 205, 216;
+
+  --ambient-0: #e4ebe8;
+  --ambient-1: #d5e0e4;
+  --ambient-2: #e8e2d5;
+  --ambient-3: #dce6ea;
+  --ambient-4: #c5d4dc;
 
   --font-serif: var(--font-display), "Cormorant Garamond", Georgia, serif;
   --font-text: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
@@ -23,6 +51,24 @@
   --max: 1180px;
   --t: 320ms cubic-bezier(0.2, 0.6, 0.2, 1);
   --radius-wave: 2px;
+
+  /* shadcn-style semantic aliases (overridden by applyThemeVars) */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-2);
+  --card-foreground: var(--ink);
+  --primary: var(--candle);
+  --primary-foreground: var(--on-deep);
+  --secondary: var(--sea);
+  --secondary-foreground: var(--on-deep);
+  --muted: var(--paper-2);
+  --muted-foreground: var(--ink-2);
+  --accent: var(--haze);
+  --accent-foreground: var(--ink);
+  --destructive: var(--closed);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--sea);
 }
 
 * {
@@ -32,13 +78,20 @@
 html,
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--field); /* fallback before ambient canvas paints */
   color: var(--ink);
   font-family: var(--font-serif);
   font-size: 18px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  min-height: 100%;
+  transition: background-color 420ms cubic-bezier(0.2, 0.6, 0.2, 1),
+    color 320ms cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+body {
+  position: relative;
 }
 
 a {
@@ -47,13 +100,42 @@ a {
 }
 
 ::selection {
-  background: rgba(200, 115, 42, 0.4);
+  background: rgba(var(--candle-rgb), 0.4);
   color: var(--ink);
+}
+
+html[data-theme-tone="dark"] ::selection {
+  color: var(--on-deep);
 }
 
 *:focus-visible {
   outline: 2px solid var(--sea);
   outline-offset: 2px;
+}
+
+/* Inside caustic scope, suppress rectangular outline — pool / crest is focus */
+.caustic-scope *:focus-visible {
+  outline: none;
+}
+
+/**
+ * Deep / instrument surface — remaps ink to on-deep so text-ink,
+ * inherited color, and t-* roles stay readable on every theme.
+ * Use on MorphShell dark, bg-deep wells, and canvas instrument chrome.
+ */
+.surface-deep {
+  --ink: var(--on-deep);
+  --ink-2: var(--on-deep-2);
+  --ink-rgb: var(--on-deep-rgb);
+  --ink-2-rgb: var(--on-deep-2-rgb);
+  --rule: rgba(var(--on-deep-rgb), 0.22);
+  color: var(--on-deep);
+}
+
+.surface-deep .t-eyebrow,
+.surface-deep .t-meta,
+.surface-deep .t-body {
+  color: inherit;
 }
 
 /* type roles */
@@ -152,11 +234,69 @@ a {
   transition-timing-function: cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
-.hero-atmosphere {
+.css-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 55% at 70% 20%, rgba(142, 182, 201, 0.35), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 15% 80%, rgba(200, 115, 42, 0.12), transparent 55%),
-    linear-gradient(180deg, #e7e1d4 0%, var(--paper) 45%, #dfe8ec 100%);
+    radial-gradient(ellipse 90% 55% at 78% 12%, rgba(var(--haze-rgb), 0.22), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 8% 88%, rgba(var(--candle-rgb), 0.08), transparent 50%),
+    linear-gradient(
+      180deg,
+      var(--ambient-0) 0%,
+      var(--ambient-1) 28%,
+      var(--ambient-2) 55%,
+      var(--ambient-3) 78%,
+      var(--ambient-4) 100%
+    );
+}
+
+html[data-atmosphere="off"] body {
+  background: var(--field);
+}
+
+.hero-atmosphere {
+  position: relative;
+  background: transparent;
+}
+
+.hero-atmosphere::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 60% at 75% 15%, rgba(var(--haze-rgb), 0.28), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 85%, rgba(var(--candle-rgb), 0.1), transparent 50%);
+  pointer-events: none;
+}
+
+.content-island {
+  background: var(--island);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Legacy class — prefer MorphShell. Kept as soft wash for stray call sites. */
+.docs-main-island {
+  background: transparent;
+}
+
+.page-tide {
+  animation: page-tide-in 520ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+@keyframes page-tide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
 .axiom-card {
@@ -188,6 +328,67 @@ a {
   border-radius: 50%;
   background: var(--candle);
   box-shadow: 0 0 0 3px rgba(200, 115, 42, 0.2);
+}
+
+/* Undertow: depth rail replaces the browser scrollbar */
+.undertow-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.undertow-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Caustic focus fields — no rectangular outline; the pool is the focus */
+.caustic-field {
+  border: none;
+  box-shadow: none;
+}
+.caustic-field:focus,
+.caustic-field:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* Readable form field — meniscus underline, not a rectangular box */
+.tide-field {
+  border: none;
+  border-bottom: 1.5px solid rgba(var(--sea-rgb), 0.35);
+  border-radius: 0;
+  background: rgba(var(--paper-rgb), 0.35);
+  box-shadow: none;
+  transition: border-color var(--t), background-color var(--t), box-shadow var(--t);
+}
+.tide-field:focus,
+.tide-field:focus-visible {
+  outline: none;
+  border-bottom-color: var(--candle);
+  background: rgba(var(--paper-rgb), 0.55);
+}
+
+/* Crest focus — zero-GPU / reduced-motion focus (beats rectangular outline) */
+.caustic-scope[data-focus-mode="crest"] .tide-field:focus,
+.caustic-scope[data-focus-mode="crest"] .tide-field:focus-visible,
+.caustic-scope[data-focus-mode="crest"] .caustic-field:focus,
+.caustic-scope[data-focus-mode="crest"] .caustic-field:focus-visible {
+  outline: none;
+  border-bottom-color: var(--candle);
+  box-shadow: 0 3px 0 0 rgba(var(--candle-rgb), 0.55);
+}
+
+.caustic-scope .tide-field:focus-visible,
+.caustic-scope .caustic-field:focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caustic-scope .tide-field:focus-visible,
+  .caustic-scope .caustic-field:focus-visible {
+    box-shadow: 0 3px 0 0 rgba(var(--candle-rgb), 0.7);
+  }
 }
 
 .tide-map-row {
@@ -232,14 +433,21 @@ a {
 .prose-docs code {
   font-family: var(--font-text);
   font-size: 0.85em;
-  background: rgba(21, 23, 26, 0.06);
+  background: rgba(var(--ink-rgb), 0.06);
   padding: 0.1em 0.35em;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .breath-word,
   .animate-btn-ripple,
-  .animate-ritual-ripple {
+  .animate-ritual-ripple,
+  .page-tide {
     animation: none !important;
+  }
+
+  .content-island,
+  .docs-main-island {
+    backdrop-filter: none;
+    background: rgba(var(--paper-rgb), 0.92);
   }
 }

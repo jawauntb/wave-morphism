@@ -25,7 +25,9 @@ export default function ComponentDocPage({
   return (
     <DocsShell>
       <PageHeader eyebrow={doc.category} title={doc.name} dek={doc.summary} />
-      <p className="mb-6 t-meta text-candle">replaces {doc.traditional}</p>
+      <p className="mb-6 t-meta text-candle">
+        {doc.tier === "core" ? "core kit" : "lab"} · replaces {doc.traditional}
+      </p>
 
       <MorphShell
         pad={false}
