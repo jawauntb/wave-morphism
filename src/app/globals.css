@@ -113,6 +113,21 @@ html[data-theme-tone="dark"] ::selection {
   outline-offset: 2px;
 }
 
+/* PhaseChip owns its focus geometry: a crest around the active node. */
+.phase-chip:focus-visible {
+  outline: none;
+}
+
+.phase-focus-crest {
+  opacity: 0;
+  filter: drop-shadow(0 0 5px rgba(var(--crest-rgb), 0.65));
+  transition: opacity var(--t);
+}
+
+.phase-chip:focus-visible .phase-focus-crest {
+  opacity: 1;
+}
+
 /* Inside caustic scope, suppress rectangular outline — pool / crest is focus */
 .caustic-scope *:focus-visible {
   outline: none;

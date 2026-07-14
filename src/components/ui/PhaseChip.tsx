@@ -120,7 +120,7 @@ export function PhaseChip({
 
   return (
     <div
-      className={`relative w-full select-none ${className}`}
+      className={`phase-chip relative w-full select-none ${className}`}
       role={multiple ? "group" : "radiogroup"}
       aria-label="phase"
       tabIndex={0}
@@ -174,6 +174,19 @@ export function PhaseChip({
 
           return (
             <g key={opt}>
+              {i === focusIndex ? (
+                <circle
+                  className="phase-focus-crest"
+                  cx={x}
+                  cy={y}
+                  r={32}
+                  fill="none"
+                  stroke="var(--crest)"
+                  strokeWidth={2}
+                  strokeDasharray="2 5"
+                />
+              ) : null}
+
               {/* standing-wave rings when active */}
               {active ? (
                 <>
