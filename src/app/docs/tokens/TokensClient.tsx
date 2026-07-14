@@ -17,7 +17,7 @@ const tokenRoles = [
   { name: "--ink-2", key: "ink2" as const, role: "secondary text on paper" },
   { name: "--on-deep", key: "onDeep" as const, role: "primary text on deep wells" },
   { name: "--on-deep-2", key: "onDeep2" as const, role: "secondary text on deep wells" },
-  { name: "--candle", key: "candle" as const, role: "warm accent / active (not body)" },
+  { name: "--candle", key: "candle" as const, role: "warm accent / meta & eyebrow on paper" },
   { name: "--sea", key: "sea" as const, role: "cold accent / focus" },
   { name: "--crest", key: "crest" as const, role: "phosphor / foam highlight" },
   { name: "--deep", key: "deep" as const, role: "instrument wells" },
@@ -45,7 +45,8 @@ export default function TokensClient() {
       <MorphShell quiet density="quiet" className="mb-10">
         <p className="t-eyebrow text-candle">contrast audit · {theme.name.toLowerCase()}</p>
         <p className="mt-2 mb-4 max-w-2xl text-ink-2">
-          Body pairs need ≥4.5:1. Candle is accent (≥3:1) — never body copy.{" "}
+          Body and candle-on-paper pairs need ≥4.5:1 (meta/eyebrow). Candle on deep is accent
+          (≥3:1).{" "}
           {fails.length === 0 ? (
             <span className="text-sea">All pairs pass AA for their role.</span>
           ) : (

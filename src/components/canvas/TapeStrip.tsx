@@ -88,7 +88,7 @@ export function TapeStrip({ className = "", height = 44 }: Props) {
 
   return (
     <div
-      className={`border-t border-rule bg-paper/90 backdrop-blur-sm ${className}`}
+      className={`border-t border-rule bg-paper ${className}`}
       style={{ height }}
       aria-hidden
     >

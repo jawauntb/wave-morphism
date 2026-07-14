@@ -464,6 +464,41 @@ export function HoldDischarge({
     requestAnimationFrame(fade);
   };
 
+  const beginHold = () => {
+    if (holding.current) return;
+    holding.current = true;
+    setHoldingUi(true);
+    start.current = performance.now();
+    pulse("hold", 0.4);
+    raf.current = requestAnimationFrame(tick);
+  };
+
+  const endHold = () => {
+    if (!holding.current) return;
+    const ready = chargeRef.current >= 0.97;
+    holding.current = false;
+    setHoldingUi(false);
+    cancelAnimationFrame(raf.current);
+    if (ready) {
+      pulse("discharge", 1);
+      fireLightning();
+      onDischarge();
+    } else {
+      pulse("abort", 0.25);
+    }
+    setCharge(0);
+  };
+
+  const cancelHold = () => {
+    if (!holding.current && chargeRef.current === 0) return;
+    holding.current = false;
+    setHoldingUi(false);
+    cancelAnimationFrame(raf.current);
+    setCharge(0);
+  };
+
+  const isHoldKey = (key: string) => key === " " || key === "Enter";
+
   const amp = 4 + charge * 5 + Math.abs(swell) * 1.5;
   const shell = liquidShell(200, 100, amp, swell * 2 + charge * 4);
 
@@ -472,35 +507,30 @@ export function HoldDischarge({
       type="button"
       className={`relative block w-full max-w-md overflow-visible select-none touch-none ${className}`}
       style={{ minHeight: 140 }}
+      aria-keyshortcuts="Space Enter"
       onPointerDown={(e) => {
         e.preventDefault();
-        holding.current = true;
-        setHoldingUi(true);
-        start.current = performance.now();
-        pulse("hold", 0.4);
-        raf.current = requestAnimationFrame(tick);
+        beginHold();
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }}
-      onPointerUp={() => {
-        const ready = charge >= 0.97;
-        holding.current = false;
-        setHoldingUi(false);
-        cancelAnimationFrame(raf.current);
-        if (ready) {
-          pulse("discharge", 1);
-          fireLightning();
-          onDischarge();
-        } else {
-          pulse("abort", 0.25);
+      onPointerUp={() => endHold()}
+      onPointerCancel={() => cancelHold()}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          cancelHold();
+          return;
         }
-        setCharge(0);
+        if (!isHoldKey(e.key) || e.repeat) return;
+        e.preventDefault();
+        beginHold();
       }}
-      onPointerCancel={() => {
-        holding.current = false;
-        setHoldingUi(false);
-        cancelAnimationFrame(raf.current);
-        setCharge(0);
+      onKeyUp={(e) => {
+        if (!isHoldKey(e.key)) return;
+        e.preventDefault();
+        endHold();
       }}
+      onBlur={() => cancelHold()}
     >
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
@@ -559,7 +589,7 @@ export function HoldDischarge({
             ? charge >= 0.97
               ? "release to strike"
               : `charging ${Math.round(charge * 100)}%`
-            : "press & hold"}
+            : "press & hold · space/enter"}
         </span>
       </span>
     </button>

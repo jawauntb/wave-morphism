@@ -22,7 +22,7 @@ export function AtmosphereLayer() {
       {ambient === "css" ? <CssAmbient /> : null}
       {/* ambient === "off" → body --field only */}
       {tapeStrip ? (
-        <div className="fixed bottom-0 inset-x-0 z-20">
+        <div className="fixed bottom-0 inset-x-0 z-20 bg-paper pb-[env(safe-area-inset-bottom)]">
           <TapeStrip />
         </div>
       ) : null}

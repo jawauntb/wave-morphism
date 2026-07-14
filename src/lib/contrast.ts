@@ -70,8 +70,9 @@ export function auditThemeContrast(theme: {
     { id: "on-deep on deep", fg: theme.onDeep, bg: theme.deep, role: "body" },
     { id: "on-deep-2 on deep", fg: theme.onDeep2, bg: theme.deep, role: "body" },
     { id: "sea on paper", fg: theme.sea, bg: theme.paper, role: "body" },
-    // candle is accent / large-text only — never body copy
-    { id: "candle on paper", fg: theme.candle, bg: theme.paper, role: "accent" },
+    // candle is used for meta/eyebrow on paper — audit as normal text (4.5:1)
+    { id: "candle on paper", fg: theme.candle, bg: theme.paper, role: "body" },
+    { id: "candle on paper-2", fg: theme.candle, bg: theme.paper2, role: "body" },
     { id: "candle on deep", fg: theme.candle, bg: theme.deep, role: "accent" },
   ];
 
@@ -100,7 +101,7 @@ export function contrastFromCssVars(): ContrastPair[] | null {
     onDeep: get("--on-deep", "#f2eee6"),
     onDeep2: get("--on-deep-2", "#b8cdd8"),
     deep: get("--deep", "#0c1822"),
-    candle: get("--candle", "#c8732a"),
+    candle: get("--candle", "#95551f"),
     sea: get("--sea", "#2c4a5c"),
   });
 }

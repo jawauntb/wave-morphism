@@ -3,10 +3,10 @@
 import { useAtmosphere, type AtmosphereMode } from "@/lib/atmosphere";
 import { useTape } from "@/lib/tape";
 
-const LABELS: Record<AtmosphereMode, string> = {
-  css: "css field",
-  canvas: "canvas field",
-  off: "flat field",
+const FIELD_LABELS: Record<AtmosphereMode, string> = {
+  css: "css",
+  canvas: "canvas",
+  off: "off",
 };
 
 /**
@@ -18,7 +18,11 @@ export function AtmosphereToggle({ className = "" }: { className?: string }) {
   const { pulse } = useTape();
 
   return (
-    <div className={`inline-flex flex-wrap items-center gap-2 ${className}`}>
+    <div
+      className={`inline-flex flex-wrap items-center gap-2 ${className}`}
+      role="group"
+      aria-label="atmosphere controls"
+    >
       <button
         type="button"
         onClick={() => {
@@ -26,10 +30,10 @@ export function AtmosphereToggle({ className = "" }: { className?: string }) {
           pulse("phase", 0.3);
         }}
         className="t-meta text-ink-2 transition-colors duration-wave hover:text-candle"
-        aria-label={`atmosphere: ${LABELS[ambient]}. click to cycle`}
+        aria-label={`Atmosphere field: ${FIELD_LABELS[ambient]}. Click to cycle css, canvas, or off.`}
         title="css = zero GPU · canvas = AmbientField · off = flat"
       >
-        {LABELS[ambient]}
+        field: {FIELD_LABELS[ambient]}
       </button>
       <button
         type="button"
@@ -39,9 +43,10 @@ export function AtmosphereToggle({ className = "" }: { className?: string }) {
         }}
         className="t-meta text-ink-2 transition-colors duration-wave hover:text-candle"
         aria-pressed={tapeStrip}
+        aria-label={`Tape strip: ${tapeStrip ? "on" : "off"}. Click to toggle.`}
         title="show or hide the tape strip"
       >
-        tape {tapeStrip ? "on" : "off"}
+        tape: {tapeStrip ? "on" : "off"}
       </button>
     </div>
   );

@@ -9,7 +9,7 @@
   --ink: #15171a;
   --ink-2: #3a3d42;
   --rule: rgba(21, 23, 26, 0.18);
-  --candle: #c8732a;
+  --candle: #95551f;
   --sea: #2c4a5c;
   --kept: #6e5a2e;
   --open: #2c4a5c;
@@ -28,7 +28,7 @@
   --paper-2-rgb: 232, 226, 213;
   --ink-rgb: 21, 23, 26;
   --ink-2-rgb: 58, 61, 66;
-  --candle-rgb: 200, 115, 42;
+  --candle-rgb: 149, 85, 31;
   --sea-rgb: 44, 74, 92;
   --crest-rgb: 142, 182, 201;
   --haze-rgb: 142, 182, 201;
@@ -172,8 +172,8 @@ html[data-theme-tone="dark"] ::selection {
 
 .t-h2 {
   font-family: var(--font-serif);
-  font-weight: 400;
-  font-style: italic;
+  font-weight: 500;
+  font-style: normal;
   font-size: clamp(1.45rem, 2.4vw, 1.85rem);
   line-height: 1.25;
 }
@@ -327,7 +327,7 @@ html[data-atmosphere="off"] body {
 .nav-wake[data-active] {
   background: linear-gradient(
     90deg,
-    rgba(200, 115, 42, 0.14),
+    rgba(var(--candle-rgb), 0.14),
     transparent 70%
   );
   border-radius: 0 1rem 1rem 0;
@@ -342,7 +342,7 @@ html[data-atmosphere="off"] body {
   margin-top: -0.28rem;
   border-radius: 50%;
   background: var(--candle);
-  box-shadow: 0 0 0 3px rgba(200, 115, 42, 0.2);
+  box-shadow: 0 0 0 3px rgba(var(--candle-rgb), 0.2);
 }
 
 /* Undertow: depth rail replaces the browser scrollbar */
@@ -423,8 +423,8 @@ html[data-atmosphere="off"] body {
 
 .prose-docs h2 {
   font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.65rem;
   margin: 2.5rem 0 0.85rem;
 }

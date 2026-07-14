@@ -6,11 +6,11 @@ import { useState, type ReactNode } from "react";
 import { navSections } from "@/data/components";
 import { WaveButton } from "@/components/ui/WaveButton";
 import { DrawerWake } from "@/components/ui/Surfaces";
-import { WaterText } from "@/components/ui/WaterText";
 import { MorphShell, WaveEdge, WaveRule } from "@/components/ui/WaveMorph";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AtmosphereToggle } from "@/components/ui/AtmosphereToggle";
 import { useSwellLFO } from "@/lib/motion";
+import { WaterText } from "@/components/ui/WaterText";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -21,20 +21,25 @@ export function SiteHeader() {
     <>
       <header className="sticky top-0 z-30 bg-paper/40 backdrop-blur-md">
         <div className="mx-auto flex max-w-site items-center justify-between gap-4 px-pad-x py-3">
-          <Link href="/" className="group flex items-baseline gap-3">
-            <WaterText as="span" className="t-brand text-[1.35rem]" radius={80} strength={8}>
-              wave-morphism
-            </WaterText>
+          <Link
+            href="/"
+            aria-label="home"
+            className="group relative z-10 flex shrink-0 items-baseline gap-3"
+            onClick={() => {
+              // Soft nav to "/" is a no-op when already home — still jump to top.
+              window.scrollTo(0, 0);
+            }}
+          >
+            {/* Plain text in chrome — WaterText displaces under the cursor and misses clicks. */}
+            <span className="t-brand text-[1.35rem]">wave-morphism</span>
             <span className="hidden t-eyebrow text-ink-2 sm:inline">design system</span>
           </Link>
           <div className="flex items-center gap-3">
-            <nav className="hidden items-center gap-1 md:flex">
+            <nav className="hidden items-center gap-1 md:flex" aria-label="primary">
               {[
                 ["/harbor", "harbor"],
                 ["/docs/proof", "proof"],
                 ["/docs/installation", "install"],
-                ["/docs/components/wave-button", "twelve"],
-                ["/docs/tokens", "themes"],
               ].map(([href, label]) => {
                 const active = pathname.startsWith(href);
                 return (
@@ -65,8 +70,14 @@ export function SiteHeader() {
                 );
               })}
             </nav>
-            <AtmosphereToggle className="hidden lg:inline-flex" />
-            <ThemeToggle className="hidden sm:inline-flex" />
+            <div
+              className="hidden items-center gap-3 border-l border-ink/15 pl-3 opacity-90 sm:flex"
+              role="group"
+              aria-label="display controls"
+            >
+              <AtmosphereToggle className="hidden lg:inline-flex" />
+              <ThemeToggle />
+            </div>
             <WaveButton
               register="oceanic"
               className="md:hidden"
@@ -149,7 +160,7 @@ export function DocsShell({ children }: { children: ReactNode }) {
       </aside>
       <main className="min-w-0">
         <MorphShell className="docs-main-shell" pad={false} caustic quiet density="quiet">
-          <div className="px-5 py-6 pb-24 md:px-8 md:py-8">{children}</div>
+          <div className="px-5 py-6 pb-24 md:px-8 md:pb-24 md:pt-8">{children}</div>
         </MorphShell>
       </main>
     </div>

@@ -87,7 +87,11 @@ export function ThemeToggle({ className = "", variant = "compact" }: Props) {
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 ${className}`}>
+    <div
+      className={`inline-flex items-center gap-1.5 ${className}`}
+      role="group"
+      aria-label="theme"
+    >
       <button
         type="button"
         onClick={() => {
@@ -95,12 +99,12 @@ export function ThemeToggle({ className = "", variant = "compact" }: Props) {
           pulse("phase", 0.35);
         }}
         className="t-meta text-ink-2 transition-colors duration-wave hover:text-candle"
-        aria-label={`theme: ${theme.name}. click to cycle`}
+        aria-label={`Theme: ${theme.name}. Click to cycle.`}
         title={`${theme.name} — ${theme.epithet}`}
       >
         {theme.name.toLowerCase()}
       </button>
-      <div className="flex items-center gap-1" role="radiogroup" aria-label="color theme">
+      <div className="flex items-center gap-0.5" role="radiogroup" aria-label="color theme">
         {themes.map((t) => {
           const active = t.id === themeId;
           return (
@@ -112,14 +116,19 @@ export function ThemeToggle({ className = "", variant = "compact" }: Props) {
               aria-label={t.name}
               title={`${t.name} — ${t.epithet}`}
               onClick={() => pick(t.id)}
-              className="relative h-4 w-4 rounded-full transition-transform duration-wave hover:scale-110"
-              style={{
-                background: `linear-gradient(135deg, ${t.candle}, ${t.sea})`,
-                boxShadow: active
-                  ? `0 0 0 2px var(--paper), 0 0 0 3px ${t.sea}`
-                  : `0 0 0 1px rgba(var(--ink-rgb), 0.2)`,
-              }}
-            />
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-transform duration-wave hover:scale-110"
+            >
+              <span
+                className="h-5 w-5 rounded-full"
+                style={{
+                  background: `linear-gradient(135deg, ${t.candle}, ${t.sea})`,
+                  boxShadow: active
+                    ? `0 0 0 2px var(--paper), 0 0 0 3px ${t.sea}`
+                    : `0 0 0 1px rgba(var(--ink-rgb), 0.2)`,
+                }}
+                aria-hidden
+              />
+            </button>
           );
         })}
       </div>
